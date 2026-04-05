@@ -21,10 +21,20 @@ def validate_birth_date(value):
 
 class Customers(models.Model):
     
-    first_name = models.CharField(max_length=40, validators=[name_validator])
-    last_name = models.CharField(max_length=100, validators=[name_validator])
+    first_name = models.CharField(
+        max_length=40,
+          validators=[name_validator]
+          )
+    last_name = models.CharField(
+        max_length=100,
+          validators=[name_validator]
+          )
     email = models.EmailField(unique=True)
-    phone_number = PhoneNumberField(region='PL', null=True, blank=True)
+    phone_number = PhoneNumberField(
+        region='PL',
+          null=True,
+            blank=True
+            )
     address = models.TextField(validators=[MinLengthValidator(8)])
     date_of_birth = models.DateField(validators=[validate_birth_date])
     created_at = models.DateTimeField(auto_now_add=True) 
