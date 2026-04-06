@@ -26,8 +26,14 @@ class Cars(models.Model):
 
     brand = models.CharField(max_length=40)
     model = models.CharField(max_length=40)
-    color = models.CharField(max_length=40)
-    vehicel_type = models.CharField(max_length=40)
+    color = models.CharField(
+        max_length=40,
+        null=True,
+        )
+    vehicel_type = models.CharField(
+        max_length=40,
+        null=True
+        )
     year = models.PositiveIntegerField(
             validators=[year_validator]
             )
