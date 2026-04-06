@@ -30,11 +30,7 @@ class Customers(models.Model):
           validators=[name_validator]
           )
     email = models.EmailField(unique=True)
-    phone_number = PhoneNumberField(
-        region='PL',
-          null=True,
-            blank=True
-            )
+    phone_number = PhoneNumberField(region='PL')
     address = models.TextField(validators=[MinLengthValidator(8)])
     date_of_birth = models.DateField(validators=[validate_birth_date])
-    created_at = models.DateTimeField(auto_now_add=True) 
+    created_at = models.DateTimeField(auto_now_add=True)
