@@ -10,6 +10,8 @@ class CarTestCase(TestCase):
             model='Corolla',
             year=2004,
             vin='123456789F2345678',
+            vehicel_type='compact car',
+            color='blue',
             mileage=40000,
             purchase_price=21500,
         )
@@ -28,6 +30,8 @@ class CarTestCase(TestCase):
             Cars.objects.create(
                     brand='Toyota',
                     model='Wroom',
+                    vehicel_type='compact car',
+                    color='yellow',
                     year=2000,
                     vin='123456789F2345678',
                     mileage=2000,
@@ -38,6 +42,8 @@ class CarTestCase(TestCase):
         car_2 = Cars(
                 brand='Mercedes',
                 model='Benz',
+                vehicel_type='compact car',
+                color='black',
                 year=2000,
                 vin='QQQQQQQ123456789Q',
                 mileage=200000,
@@ -51,6 +57,8 @@ class CarTestCase(TestCase):
                 brand='BMW',
                 model='E200',
                 year=2010,
+                vehicel_type='SUV',
+                color='white',
                 vin='12345678901234567',
                 mileage=253323,
                 description=('a' * 600)
@@ -63,6 +71,8 @@ class CarTestCase(TestCase):
         car_4 = Cars(
                 brand='Mercedes',
                 model='Benz',
+                vehicel_type='Sports car',
+                color='red',
                 year=1880,
                 vin='12345678901234567',
                 mileage=2000,
@@ -75,6 +85,8 @@ class CarTestCase(TestCase):
         car_5 = Cars(
                 brand='Mercedes',
                 model='Benz',
+                vehicel_type='Racing car',
+                color='orange',
                 year=5000,
                 vin='12345678901234567',
                 mileage=20000,
@@ -87,6 +99,8 @@ class CarTestCase(TestCase):
         car_6 = Cars(
                 brand='Mercedes',
                 model='Benz',
+                vehicel_type='Racing car',
+                color='silver',
                 year=2021,
                 vin='12345678901234567',
                 mileage=20000000,
