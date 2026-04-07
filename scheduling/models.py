@@ -76,3 +76,52 @@ class ServiceAppointment(models.Model):
     def __str__(self):
         return f"{self.customer} - {self.service_type} ({self.appointment_date.date()})"
 
+
+### TestDrive
+
+class TestDrive(models.Model):
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        CONFIRMED = "confirmed", "Confirmed"
+        COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
+        NO_SHOW = "no_show", "No show"
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="test_drives"
+    )
+
+    car = models.ForeignKey(
+        Cars,
+        on_delete=models.CASCADE,
+        related_name="test_drives"
+    )
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="test_drives"
+    )
+
+    scheduled_date = models.DateTimeField(
+        validators=[validate_appointment_schedule_date]
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+
+    notes = models.TextField(
+        blank=True,
+        validators=[MaxLengthValidator(1500)]
+        )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.customer} - {self.car} ({self.scheduled_date.date()})"
