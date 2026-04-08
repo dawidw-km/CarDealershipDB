@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
 from django.utils import timezone
 from person.models import Customer, Employee
-from cars.models import Cars
+from cars.models import Car
 
 ##ServiceAppointment
 
@@ -37,7 +37,7 @@ class ServiceAppointment(models.Model):
     )
 
     car = models.ForeignKey(
-        Cars,
+        Car,
         on_delete=models.CASCADE,
         related_name="service_appointments"
     )
@@ -95,7 +95,7 @@ class TestDrive(models.Model):
     )
 
     car = models.ForeignKey(
-        Cars,
+        Car,
         on_delete=models.CASCADE,
         related_name="test_drives"
     )

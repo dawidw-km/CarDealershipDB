@@ -39,7 +39,7 @@ class PersonBase(models.Model):
     class Meta:
         abstract = True
 
-class Customers(PersonBase):
+class Customer(PersonBase):
 
     address = models.TextField(validators=[MinLengthValidator(8)])
     date_of_birth = models.DateField(validators=[validate_birth_date])

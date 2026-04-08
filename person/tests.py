@@ -1,11 +1,11 @@
 from datetime import date
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from .models import Customers
+from .models import Customer
 
 class CustomerTestCase(TestCase):
     def setUp(self):
-        self.customer_1=Customers(
+        self.customer_1=Customer(
             first_name='Dawid',
             last_name='Niekonieczny',
             email='testcase@gmail.com',
@@ -17,7 +17,7 @@ class CustomerTestCase(TestCase):
         self.customer_1.full_clean()
 
     def test_first_name_cannot_contain_special_characters(self):
-        self.customer_2=Customers(
+        self.customer_2=Customer(
             first_name='Dawid!',
             last_name='Niekonieczny',
             email='test1@gmail.com',
@@ -35,7 +35,7 @@ class CustomerTestCase(TestCase):
         )
 
     def test_invalid_email(self):
-        self.customer_3=Customers(
+        self.customer_3=Customer(
             first_name='Robert',
             last_name='Janczarski',
             email='wrong-email',
@@ -49,7 +49,7 @@ class CustomerTestCase(TestCase):
 
 
     def test_duplicated_email(self):
-        self.customer_4=Customers.objects.create(
+        self.customer_4=Customer.objects.create(
             first_name='Mike',
             last_name='Spayson',
             email='mikespayson@gmail.com',
@@ -58,7 +58,7 @@ class CustomerTestCase(TestCase):
             date_of_birth=date(2001, 2, 3)
         )
 
-        self.customer_5=Customers(
+        self.customer_5=Customer(
             first_name='Pike',
             last_name='Spayson',
             email='mikespayson@gmail.com',
@@ -72,7 +72,7 @@ class CustomerTestCase(TestCase):
 
     
     def test_phone_number_is_required(self):
-        self.customer_6=Customers(
+        self.customer_6=Customer(
             first_name='Michał',
             last_name='Woźniak',
             email='michalwolzniak12@gmail.com',
@@ -85,7 +85,7 @@ class CustomerTestCase(TestCase):
 
     
     def test_birth_date_cannot_be_in_future(self):
-        self.customer_7=Customers(
+        self.customer_7=Customer(
             first_name='Jan',
             last_name='Nowak',
             email='jan.nowak@gmail.com',
@@ -103,7 +103,7 @@ class CustomerTestCase(TestCase):
         )
 
     def test_customer_must_be_adult(self):
-        self.customer_8=Customers(
+        self.customer_8=Customer(
             first_name='Jan',
             last_name='Nowak',
             email='jan.nowak2@gmail.com',
@@ -122,7 +122,7 @@ class CustomerTestCase(TestCase):
     
     
     def test_address_too_short(self):
-        self.customer_9=Customers(
+        self.customer_9=Customer(
             first_name='Jan',
             last_name='Kowalski',
             email='janek.kowalski@gmail.com',
