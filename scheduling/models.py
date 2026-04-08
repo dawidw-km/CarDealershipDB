@@ -11,7 +11,7 @@ def validate_appointment_schedule_date(value):
     if value < timezone.now():
         raise ValidationError("Appointment date cannot be in the past.")
 
-
+    
 class ServiceAppointment(models.Model):
 
     class Status(models.TextChoices):
