@@ -1,11 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
-from .models import Cars
+from .models import Car
 
 class CarTestCase(TestCase):
     def setUp(self):
-       self.car_a = Cars.objects.create(
+       self.car_a = Car.objects.create(
             brand='Toyota',
             model='Corolla',
             year=2004,
@@ -27,7 +27,7 @@ class CarTestCase(TestCase):
     
     def test_uniqueness_vin_error(self):
         with self.assertRaises(IntegrityError):
-            Cars.objects.create(
+            Car.objects.create(
                     brand='Toyota',
                     model='Wroom',
                     vehicel_type='compact car',
@@ -39,7 +39,7 @@ class CarTestCase(TestCase):
 
 
     def test_invalid_vin_number(self):
-        car_2 = Cars(
+        car_2 = Car(
                 brand='Mercedes',
                 model='Benz',
                 vehicel_type='compact car',
@@ -53,7 +53,7 @@ class CarTestCase(TestCase):
             car_2.full_clean()
 
     def test_description_too_long(self):
-        car_3 = Cars(
+        car_3 = Car(
                 brand='BMW',
                 model='E200',
                 year=2010,
@@ -68,7 +68,7 @@ class CarTestCase(TestCase):
             car_3.full_clean()
 
     def test_year_too_early(self):
-        car_4 = Cars(
+        car_4 = Car(
                 brand='Mercedes',
                 model='Benz',
                 vehicel_type='Sports car',
@@ -82,7 +82,7 @@ class CarTestCase(TestCase):
             car_4.full_clean()
 
     def test_year_too_late(self):
-        car_5 = Cars(
+        car_5 = Car(
                 brand='Mercedes',
                 model='Benz',
                 vehicel_type='Racing car',
@@ -96,7 +96,7 @@ class CarTestCase(TestCase):
             car_5.full_clean()
 
     def test_mileage_value_too_high(self):
-        car_6 = Cars(
+        car_6 = Car(
                 brand='Mercedes',
                 model='Benz',
                 vehicel_type='Racing car',

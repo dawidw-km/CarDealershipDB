@@ -16,7 +16,7 @@ def year_validator(year):
     if year > current_year:
         raise ValidationError("Date of production cannot be in the future.")
 
-class Cars(models.Model):
+class Car(models.Model):
 
     STATUS_CHOICES = [
         ('available', 'Available'),
