@@ -5,6 +5,12 @@ from cars.models import Car
 
 class Sale(models.Model):
 
+    class PaymentMethod(models.TextChoices):
+        CASH = 'cash', 'Cash'
+        CARD = 'card', 'Card'
+        TRANSFER = 'transfer', 'Transfer'
+        LEASING = 'leasing', 'Leasing'
+
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -29,7 +35,10 @@ class Sale(models.Model):
 
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)
 
-    payment_method = models.CharField(max_length=50)
+    payment_method = models.CharField(
+        max_length=10,
+        choices=PaymentMethod.choices
+        )
 
     notes = models.TextField(
         blank=True,

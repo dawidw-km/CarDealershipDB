@@ -70,7 +70,6 @@ class CustomerTestCase(TestCase):
         with self.assertRaises(ValidationError):
             self.customer_5.full_clean()
 
-    
     def test_phone_number_is_required(self):
         self.customer_6=Customer(
             first_name='Michał',
