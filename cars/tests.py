@@ -10,7 +10,7 @@ class CarTestCase(TestCase):
             model='Corolla',
             year=2004,
             vin='123456789F2345678',
-            vehicel_type='compact car',
+            vehicle_type='compact car',
             color='blue',
             mileage=40000,
             purchase_price=21500,
@@ -30,7 +30,7 @@ class CarTestCase(TestCase):
             Car.objects.create(
                     brand='Toyota',
                     model='Wroom',
-                    vehicel_type='compact car',
+                    vehicle_type='compact car',
                     color='yellow',
                     year=2000,
                     vin='123456789F2345678',
@@ -42,7 +42,7 @@ class CarTestCase(TestCase):
         car_2 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicel_type='compact car',
+                vehicle_type='compact car',
                 color='black',
                 year=2000,
                 vin='QQQQQQQ123456789Q',
@@ -57,7 +57,7 @@ class CarTestCase(TestCase):
                 brand='BMW',
                 model='E200',
                 year=2010,
-                vehicel_type='SUV',
+                vehicle_type='SUV',
                 color='white',
                 vin='12345678901234567',
                 mileage=253323,
@@ -71,7 +71,7 @@ class CarTestCase(TestCase):
         car_4 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicel_type='Sports car',
+                vehicle_type='Sports car',
                 color='red',
                 year=1880,
                 vin='12345678901234567',
@@ -85,7 +85,7 @@ class CarTestCase(TestCase):
         car_5 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicel_type='Racing car',
+                vehicle_type='Racing car',
                 color='orange',
                 year=5000,
                 vin='12345678901234567',
@@ -99,7 +99,7 @@ class CarTestCase(TestCase):
         car_6 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicel_type='Racing car',
+                vehicle_type='Racing car',
                 color='silver',
                 year=2021,
                 vin='12345678901234567',

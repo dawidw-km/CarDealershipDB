@@ -16,23 +16,36 @@ def year_validator(year):
     if year > current_year:
         raise ValidationError("Date of production cannot be in the future.")
 
-class Car(models.Model):
+class VehicleType(models.TextChoices):
+    SEDAN = "sedan", "Sedan"
+    HATCHBACK = "hatchback", "Hatchback"
+    SUV = "suv", "SUV"
+    COUPE = "coupe", "Coupe"
+    WAGON = "wagon", "Wagon"
+    CONVERTIBLE = "convertible", "Convertible"
+    VAN = "van", "Van"
+    PICKUP = "pickup", "Pickup"
 
-    STATUS_CHOICES = [
-        ('available', 'Available'),
-        ('reserved', "Reserved"),
-        ('sold', 'Sold'),
-    ]
+
+class Status(models.TextChoices):
+    AVAILABLE = "available", "Available"
+    RESERVED = "reserved", "Reserved"
+    SOLD = "sold", "Sold"
+
+
+class Car(models.Model):
 
     brand = models.CharField(max_length=40)
     model = models.CharField(max_length=40)
     color = models.CharField(
         max_length=40,
         null=True,
+        blank=True,
         )
-    vehicel_type = models.CharField(
-        max_length=40,
-        null=True
+    vehicle_type = models.CharField(
+        max_length=20,
+        choices=VehicleType.choices, #type: ignore
+        blank=True
         )
     year = models.PositiveIntegerField(
             validators=[year_validator]
@@ -62,8 +75,8 @@ class Car(models.Model):
 
     status = models.CharField(
         max_length=10,
-        choices=STATUS_CHOICES,
-        default="available"
+        choices=Status.choices, #type: ignore
+        default=Status.AVAILABLE,
     )
 
     description = models.TextField(
