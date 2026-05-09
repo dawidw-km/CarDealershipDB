@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from cars.views import CarViewSet
-from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView, EmployeeListView
+from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView, EmployeeListView, CustomerDetailView
 
 router = routers.DefaultRouter()
 router.register(
@@ -53,6 +53,11 @@ urlpatterns = [
         CustomerRegistrationView.as_view(),
         name="customer-registration"
         ),
+    path(
+        "api/customer/me",
+        CustomerDetailView.as_view(),
+        name="customer-detail"
+    ),
     path(
         "register/employee/",
         EmployeeRegistrationView.as_view(),

@@ -108,3 +108,23 @@ class CustomerSerializer(serializers.ModelSerializer):
             "id",
             "created_at"
         ]
+
+class CustomerDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "address",
+            "date_of_birth",
+            "created_at"
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "created_at",
+            "date_of_birth"
+        ]
