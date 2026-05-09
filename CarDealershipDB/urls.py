@@ -18,16 +18,49 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from cars.views import CarViewSet
-
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
+from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView, EmployeeListView
 
 router = routers.DefaultRouter()
-router.register(r"cars", CarViewSet)
+router.register(
+    r"cars",
+    CarViewSet
+    )
+router.register(
+    r"customers",
+    CustomerViewSet
+    )
+router.register(
+    r"employees",
+    EmployeeViewSet
+    )
 
 urlpatterns = [
-    path("", include(router.urls)),
-    path("api-auth/", include("rest_framework.urls", namespace="rest_framework"))
+    path(
+        'admin/',
+        admin.site.urls
+        ),
+    path(
+        "",
+        include(router.urls)
+        ),
+    path(
+        "api-auth/",
+        include("rest_framework.urls",
+        namespace="rest_framework")
+        ),
+    path(
+        "register/customer/",
+        CustomerRegistrationView.as_view(),
+        name="customer-registration"
+        ),
+    path(
+        "register/employee/",
+        EmployeeRegistrationView.as_view(),
+        name="employee-registration"
+        ),
+    path(
+        "api/admin/employees/",
+        EmployeeListView.as_view(),
+        name="employee-list"
+        )
 ]
