@@ -1,4 +1,5 @@
 from datetime import date
+from django.conf import settings
 from django.db import models
 from django.core.validators import RegexValidator, MinLengthValidator, MinValueValidator
 from django.core.exceptions import ValidationError
@@ -41,6 +42,12 @@ class PersonBase(models.Model):
 
 class Customer(PersonBase):
 
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='customer_profile'
+    )
+
     address = models.TextField(validators=[MinLengthValidator(8)])
     date_of_birth = models.DateField(validators=[validate_birth_date])
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,6 +55,12 @@ class Customer(PersonBase):
 
 class Employee(PersonBase):
     
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='employee_profile'
+    )
+
     ROLE_CHOICES = [
         ('worker', 'Worker'),
         ('admin', 'Admin')
@@ -65,3 +78,4 @@ class Employee(PersonBase):
         decimal_places=2,
         validators=[MinValueValidator(0)]
         )
+    created_at = models.DateTimeField(auto_now_add=True)
