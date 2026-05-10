@@ -54,7 +54,7 @@ urlpatterns = [
         name="customer-registration"
         ),
     path(
-        "api/customer/me",
+        "api/customer/me/",
         CustomerDetailView.as_view(),
         name="customer-detail"
     ),
