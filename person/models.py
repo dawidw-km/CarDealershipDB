@@ -55,21 +55,20 @@ class Customer(PersonBase):
 
 class Employee(PersonBase):
     
+    class EmployeeRole(models.TextChoices):
+        WORKER = 'worker', 'Worker'
+        ADMIN = 'admin', 'Admin'
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='employee_profile'
     )
 
-    ROLE_CHOICES = [
-        ('worker', 'Worker'),
-        ('admin', 'Admin')
-    ]
-
     role = models.CharField(
         max_length=10,
-        choices=ROLE_CHOICES,
-        default='worker'
+        choices=EmployeeRole.choices,
+        default=EmployeeRole.WORKER
     )
 
     hire_date = models.DateField(validators=[validate_hire_date])
