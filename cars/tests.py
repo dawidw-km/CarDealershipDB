@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
-from .models import Car
+from .models import Car, VehicleType
 
 class CarTestCase(TestCase):
     def setUp(self):
@@ -10,7 +10,7 @@ class CarTestCase(TestCase):
             model='Corolla',
             year=2004,
             vin='123456789F2345678',
-            vehicle_type='compact car',
+            vehicle_type=VehicleType.SEDAN,
             color='blue',
             mileage=40000,
             purchase_price=21500,
@@ -30,19 +30,19 @@ class CarTestCase(TestCase):
             Car.objects.create(
                     brand='Toyota',
                     model='Wroom',
-                    vehicle_type='compact car',
+                    vehicle_type=VehicleType.CONVERTIBLE,
                     color='yellow',
                     year=2000,
                     vin='123456789F2345678',
                     mileage=2000,
-                    )
+                )
 
 
     def test_invalid_vin_number(self):
         car_2 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicle_type='compact car',
+                vehicle_type=VehicleType.SUV,
                 color='black',
                 year=2000,
                 vin='QQQQQQQ123456789Q',
@@ -57,7 +57,7 @@ class CarTestCase(TestCase):
                 brand='BMW',
                 model='E200',
                 year=2010,
-                vehicle_type='SUV',
+                vehicle_type=VehicleType.SEDAN,
                 color='white',
                 vin='12345678901234567',
                 mileage=253323,
@@ -71,7 +71,7 @@ class CarTestCase(TestCase):
         car_4 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicle_type='Sports car',
+                vehicle_type=VehicleType.SEDAN,
                 color='red',
                 year=1880,
                 vin='12345678901234567',
@@ -85,7 +85,7 @@ class CarTestCase(TestCase):
         car_5 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicle_type='Racing car',
+                vehicle_type=VehicleType.SEDAN,
                 color='orange',
                 year=5000,
                 vin='12345678901234567',
@@ -99,7 +99,7 @@ class CarTestCase(TestCase):
         car_6 = Car(
                 brand='Mercedes',
                 model='Benz',
-                vehicle_type='Racing car',
+                vehicle_type=VehicleType.SEDAN,
                 color='silver',
                 year=2021,
                 vin='12345678901234567',

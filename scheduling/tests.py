@@ -1,16 +1,29 @@
 from django.test import TestCase
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from scheduling.models import ServiceAppointment
-from person.models import Customer, Employee
-from cars.models import Car
+from person.models import Customer
+from cars.models import Car, VehicleType
 from datetime import date, timedelta
 
+User = get_user_model()
+
 class TestScheduling(TestCase):
+
+    def create_user(self, email):
+            return User.objects.create_user(
+                username=email,
+                email=email,
+                password="anything"
+            )
     
     def setUp(self):
-        
+
+        self.user_customer=self.create_user('testemaila@gmail.com')
+
         self.customer_scheduling=Customer.objects.create(
+            user=self.user_customer,
             first_name='Dawid',
             last_name='Niekonieczny',
             email='testscheduling@gmail.com',
@@ -24,7 +37,7 @@ class TestScheduling(TestCase):
             model='Corolla',
             year=2004,
             vin='123456789F2345678',
-            vehicel_type='compact car',
+            vehicle_type=VehicleType.SEDAN,
             color='blue',
             mileage=40000,
             purchase_price=21500,
@@ -79,6 +92,7 @@ class TestScheduling(TestCase):
             service_appointment_c.full_clean()
 
     def test__max_characters_notes_service_appointment(self):
+
         service_appointment_c1=ServiceAppointment(
             customer=self.customer_scheduling,
             car=self.car_scheduling,
@@ -91,7 +105,6 @@ class TestScheduling(TestCase):
         service_appointment_c1.full_clean()
 
     def test_no_service_type_service_appointment(self):
-        
         service_appointment_d=ServiceAppointment(
             customer=self.customer_scheduling,
             car=self.car_scheduling,
@@ -104,7 +117,6 @@ class TestScheduling(TestCase):
             service_appointment_d.full_clean()
 
     def test_nullable_cost_service_appointment(self):
-        
         service_appointment_e=ServiceAppointment(
             customer=self.customer_scheduling,
             car=self.car_scheduling,
@@ -119,9 +131,19 @@ class TestScheduling(TestCase):
 
 class TestTestDrive(TestCase):
 
+    def create_user(self, email):
+            return User.objects.create_user(
+                username=email,
+                email=email,
+                password="anything"
+            )
+
     def setUp(self):
         
+        self.user_customer=self.create_user('testtest@gmail.com')
+
         self.customer_scheduling=Customer.objects.create(
+            user=self.user_customer,
             first_name='Spongebob',
             last_name='Squarepants',
             email='testscheduling1@gmail.com',
@@ -135,7 +157,7 @@ class TestTestDrive(TestCase):
             model='Corolla',
             year=2004,
             vin='123456789F2345678',
-            vehicel_type='compact car',
+            vehicle_type=VehicleType.SEDAN,
             color='blue',
             mileage=40000,
             purchase_price=21500,
