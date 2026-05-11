@@ -20,7 +20,7 @@ from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from cars.views import CarViewSet
 from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView
-from person.views import EmployeeListView, CustomerDetailView, login_view, customer_registration_view
+from person.views import EmployeeListView, CustomerDetailView, login_view, customer_registration_view, customer_profile_view
 
 router = routers.DefaultRouter()
 router.register(
@@ -81,7 +81,7 @@ urlpatterns = [
         TokenRefreshView.as_view(),
         name="token_refresh"
         ),
-        
+
     # Template urls
     path(
         "register/customer/form/",
@@ -92,5 +92,10 @@ urlpatterns = [
         "login/customer/form/",
         login_view,
         name="customer-login-form"
+    ),
+    path(
+        "customer/profile/",
+        customer_profile_view,
+        name="customer-profile"
     )
 ]

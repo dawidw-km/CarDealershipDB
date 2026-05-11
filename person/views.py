@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
@@ -73,8 +74,8 @@ def login_view(request):
             login(request, user)
             return render(
                 request,
-                "person/customer_registration.html",
-                {"message_success": "Login successful!"}
+                "person/customer_profile.html",
+                {"customer": user.customer_profile}
             )
         
         return render(
@@ -108,4 +109,18 @@ def customer_registration_view(request):
     return render(
         request,
         "person/customer_registration.html"
+    )
+
+@login_required(login_url="customer-login-form")
+def customer_profile_view(request):
+    """
+    Render the authenticated customer's profile page.
+    """
+
+    customer = request.user.customer_profile
+
+    return render(
+        request,
+        "person/customer_profile.html",
+        {"customer": customer}
     )

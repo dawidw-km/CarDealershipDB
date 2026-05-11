@@ -1,0 +1,28 @@
+<!-- person/templates/person/customer_profile.html -->
+
+<h1>Customer Profile</h1>
+
+<div>
+    {% csrf_token %}
+
+    <p>
+        <strong>Name:</strong> {{ customer.first_name }} {{ customer.last_name }}
+    </p>
+    <p>
+        <strong>Email:</strong>
+         {{ customer.email }}
+    </p>
+    <p>
+        <strong>Phone Number:</strong>
+         {{ customer.phone_number }}
+    </p>
+    <p>
+        <strong>Address:</strong>
+         {{ customer.address }}
+    </p>
+    <p>
+        <strong>Date of Birth:</strong>
+         {{ customer.date_of_birth }}
+    </p>
+
+</div>
