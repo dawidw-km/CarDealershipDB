@@ -19,7 +19,8 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from cars.views import CarViewSet
-from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView, EmployeeListView, CustomerDetailView
+from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView
+from person.views import EmployeeListView, CustomerDetailView, login_view, customer_registration_view
 
 router = routers.DefaultRouter()
 router.register(
@@ -36,6 +37,7 @@ router.register(
     )
 
 urlpatterns = [
+    # API urls
     path(
         'admin/',
         admin.site.urls
@@ -79,4 +81,16 @@ urlpatterns = [
         TokenRefreshView.as_view(),
         name="token_refresh"
         ),
+        
+    # Template urls
+    path(
+        "register/customer/form/",
+        customer_registration_view,
+        name="customer-registration-form"
+        ),
+    path(
+        "login/customer/form/",
+        login_view,
+        name="customer-login-form"
+    )
 ]

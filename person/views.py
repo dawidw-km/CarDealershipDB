@@ -1,9 +1,12 @@
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect, render
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Customer, Employee
 from .serializers import CustomerSerializer, EmployeeSerializer, CustomerRegistrationSerializer, EmployeeRegistrationSerializer, CustomerDetailSerializer
 from .permissions import IsEmployeeAdmin, IsAnonymous
 
+# API Views
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
@@ -50,3 +53,59 @@ class EmployeeListView(generics.ListAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     permission_classes = [IsEmployeeAdmin]
+
+# Template Views
+def login_view(request):
+    """
+    Render login form and authenticate users.
+    """
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        user = authenticate(
+            request,
+            username=email,
+            password=password
+        )
+
+        if user is not None:
+            login(request, user)
+            return render(
+                request,
+                "person/customer_registration.html",
+                {"message_success": "Login successful!"}
+            )
+        
+        return render(
+            request,
+            "person/login.html",
+            {"error": "Invalid email or password."}
+        )
+    
+    return render(
+        request,
+        "person/login.html"
+    )
+
+def customer_registration_view(request):
+    """
+    Render customer registration form and create customer accounts.
+    """
+    if request.method == "POST":
+        serializer = CustomerRegistrationSerializer(data=request.POST)
+
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("customer-login-form")
+        
+        return render(
+            request,
+            "person/customer_registration.html",
+            {"errors": serializer.errors}
+        )
+    
+    return render(
+        request,
+        "person/customer_registration.html"
+    )
