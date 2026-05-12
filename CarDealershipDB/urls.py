@@ -19,8 +19,21 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from cars.views import CarViewSet
-from person.views import CustomerViewSet, EmployeeViewSet, CustomerRegistrationView, EmployeeRegistrationView
-from person.views import EmployeeListView, CustomerDetailView, login_view, customer_registration_view, customer_profile_view
+from person.views.api_views import (
+    CustomerDetailView,
+    CustomerViewSet,
+    EmployeeViewSet,
+    CustomerRegistrationView,
+    EmployeeRegistrationView,
+    EmployeeListView,
+    CustomerDetailView,
+)
+from person.views.template_views import (
+    login_view,
+    customer_registration_view,
+    customer_profile_view,
+    customer_profile_update_view,
+)
 
 router = routers.DefaultRouter()
 router.register(
@@ -97,5 +110,10 @@ urlpatterns = [
         "customer/profile/",
         customer_profile_view,
         name="customer-profile"
+    ),
+    path(
+        "customer/profile/update/",
+        customer_profile_update_view,
+        name="customer-profile-update"
     )
 ]
