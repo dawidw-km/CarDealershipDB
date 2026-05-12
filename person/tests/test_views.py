@@ -7,6 +7,9 @@ from datetime import date
 User = get_user_model()
 
 class CustomerViewsTestCase(APITestCase):
+
+# Helper methods to create test data
+
     def create_user(self, email):
         return User.objects.create_user(
             username=email,
@@ -58,6 +61,8 @@ class CustomerViewsTestCase(APITestCase):
         hire_date=date(2020, 1, 1)
     )
  
+# Test cases
+
     def test_anonymous_user_can_create_customer_account(self):
         data = {
             "first_name": "Dawid",
