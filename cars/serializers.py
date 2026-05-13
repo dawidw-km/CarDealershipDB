@@ -6,6 +6,7 @@ class CarSerializer(serializers.ModelSerializer):
         model = Car
         fields = [
             "id",
+            "owner",
             "brand",
             "model",
             "color",
@@ -17,9 +18,13 @@ class CarSerializer(serializers.ModelSerializer):
             "selling_price",
             "status",
             "description",
+            "moderation_status",
+            "reviewer",
             "created_at",
         ]
         read_only_fields = [
             "id",
+            "owner",
+            "reviewer",
             "created_at"
         ]
