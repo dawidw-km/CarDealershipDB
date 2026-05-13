@@ -32,8 +32,20 @@ class Status(models.TextChoices):
     RESERVED = "reserved", "Reserved"
     SOLD = "sold", "Sold"
 
+class ModerationStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
 
 class Car(models.Model):
+
+    owner = models.ForeignKey(
+        'person.Customer',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cars'
+    )
 
     brand = models.CharField(max_length=40)
     model = models.CharField(max_length=40)
@@ -83,6 +95,20 @@ class Car(models.Model):
             blank=True,
             validators=[MaxLengthValidator(500)]
             )
+
+    moderation_status = models.CharField(
+        max_length=10,
+        choices=ModerationStatus.choices, #type: ignore
+        default=ModerationStatus.PENDING,
+    )
+
+    reviewer = models.ForeignKey(
+        'person.Employee',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_cars'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

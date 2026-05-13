@@ -79,11 +79,6 @@ class CustomerTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            "/customer/profile/"
-        )
-
-        self.assertRedirects(
-            response,
             reverse("customer-profile")
         )
 
