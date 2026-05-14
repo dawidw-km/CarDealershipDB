@@ -72,6 +72,10 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
         )
 
         return employee
+    
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, required=True, min_length=5)
 
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,22 +95,24 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "created_at"
         ]
 
-class CustomerSerializer(serializers.ModelSerializer):
+class EmployeeDetailSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Customer
+        model = Employee
         fields = [
             "id",
             "first_name",
             "last_name",
             "email",
             "phone_number",
-            "address",
-            "date_of_birth",
+            "role",
+            "hire_date",
+            "salary",
             "created_at"
         ]
         read_only_fields = [
             "id",
-            "created_at"
+            "email",
+            "created_at",
         ]
 
 class CustomerDetailSerializer(serializers.ModelSerializer):

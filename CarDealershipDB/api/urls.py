@@ -4,22 +4,18 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from cars.views import CarViewSet
 from person.views.api_views import (
     CustomerDetailView,
-    CustomerViewSet,
     EmployeeViewSet,
     CustomerRegistrationView,
     EmployeeRegistrationView,
     EmployeeListView,
     CustomerDetailView,
+    ChangePasswordView,
 )
 
 router = routers.DefaultRouter()
 router.register(
     r"cars",
     CarViewSet
-    )
-router.register(
-    r"customers",
-    CustomerViewSet
     )
 router.register(
     r"employees",
@@ -43,9 +39,14 @@ urlpatterns = [
         name="customer-registration"
         ),
     path(
-        "api/customer/me/",
+        "customer/me/",
         CustomerDetailView.as_view(),
         name="customer-detail"
+    ),
+    path(
+        "change-password/",
+        ChangePasswordView.as_view(),
+        name="change-password"
     ),
     path(
         "register/employee/",
@@ -53,17 +54,17 @@ urlpatterns = [
         name="employee-registration"
         ),
     path(
-        "api/admin/employees/",
+        "/admin/employees/",
         EmployeeListView.as_view(),
         name="employee-list"
         ),
     path(
-        "api/token/",
+        "token/",
         TokenObtainPairView.as_view(),
         name="token_obtain_pair"
         ),
     path(
-        "api/token/refresh/",
+        "token/refresh/",
         TokenRefreshView.as_view(),
         name="token_refresh"
         ),

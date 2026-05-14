@@ -2,7 +2,6 @@ from rest_framework.permissions import BasePermission
 from cars.models import Status
 
 
-
 class IsEmployeeAdmin(BasePermission):
     """
     Custom permission allowing only employee admins
