@@ -110,3 +110,62 @@ class CustomerTemplateViewsTestCase(TestCase):
                 first_name = "Jacek"
             ).exists()
         )
+
+    
+    def test_logged_user_can_change_password(self):
+
+        self.create_customer("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("customer-change-password"),
+            {
+                "old_password": "testpassword",
+                "new_password": "newtestpassword",
+            }
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("customer-login-form")
+        )
+    
+    def test_logged_user_cannot_change_password_with_wrong_old_password(self):
+
+        self.create_customer("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("customer-change-password"),
+            {
+                "old_password": "wrongpassword",
+                "new_password": "newtestpassword",
+            }
+        )
+
+        self.assertEqual(response.context["error"], "Wrong password.")
+
+    def test_not_logged_user_cannot_change_password(self):
+
+        self.create_customer("jack.reacher@example.com")
+
+        response = self.client.post(
+            reverse("customer-change-password"),
+            {
+                "old_password": "testpassword",
+                "new_password": "newtestpassword",
+            }
+        )
+
+        self.assertRedirects(
+            response,
+            "/login/customer/form/?next=/customer/change-password/"
+        )

@@ -74,7 +74,7 @@ class CustomerViewsTestCase(APITestCase):
             "password": "testpass123"
         }
 
-        response = self.client.post("/register/customer/", data, format="json")
+        response = self.client.post("/api/register/customer/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(email="dawid.konieczny@example.com").exists())
@@ -95,7 +95,7 @@ class CustomerViewsTestCase(APITestCase):
             "password": "testpass123"
         }
 
-        response = self.client.post("/register/customer/", data, format="json")
+        response = self.client.post("/api/register/customer/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
@@ -154,7 +154,7 @@ class CustomerViewsTestCase(APITestCase):
             "password": "testpass123"
         }
 
-        response = self.client.post("/register/employee/", data, format="json")
+        response = self.client.post("/api/register/employee/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertFalse(Employee.objects.filter(email="oskar.aleksandrzak@example.com").exists())
 
@@ -174,7 +174,7 @@ class CustomerViewsTestCase(APITestCase):
             "password": "testpass123"
         }
 
-        response = self.client.post("/register/employee/", data, format="json")
+        response = self.client.post("/api/register/employee/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Employee.objects.filter(email="oskar.aleksandrzak@example.com").exists())
 
@@ -186,4 +186,17 @@ class CustomerViewsTestCase(APITestCase):
         self.create_employee_worker("worker@example.com")
 
         response = self.client.get("/api/admin/employees/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_customer_can_change_own_password(self):
+        customer = self.create_customer("jackreacher@example.com")
+
+        self.client.force_authenticate(user=customer.user)
+
+        data = {
+            "old_password": "testpass123",
+            "new_password": "newpass456"
+        }
+
+        response = self.client.put("/api/change-password/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

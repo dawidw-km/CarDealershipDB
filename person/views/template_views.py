@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from ..serializers import (
     CustomerRegistrationSerializer,
     CustomerDetailSerializer,
+    PasswordChangeSerializer,
 )
 
 def login_view(request):
@@ -58,6 +59,37 @@ def customer_registration_view(request):
         "person/customer_registration.html"
     )
 
+
+@login_required(login_url="customer-login-form")
+def customer_password_change_view(request):
+    """
+    Render a form to change the authenticated customer's password.
+    """
+    if request.method == 'POST':
+        serializer = PasswordChangeSerializer(data=request.POST)
+        if serializer.is_valid():
+            user = request.user
+
+            if not user.check_password(serializer.validated_data['old_password']):
+                return render(
+                    request,
+                    "person/customer_password_change.html",
+                    {'error': 'Wrong password.'}
+                )
+            
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return redirect("customer-login-form")
+        
+        return render(
+            request,
+            "person/customer_password_change.html",
+            {"errors": serializer.errors}
+        )
+    return render(
+        request,
+        "person/customer_password_change.html"
+    )
 
 @login_required(login_url="customer-login-form")
 def customer_profile_view(request):

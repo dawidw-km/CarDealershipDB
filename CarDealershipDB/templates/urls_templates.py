@@ -4,6 +4,7 @@ from person.views.template_views import (
     login_view,
     customer_profile_view,
     customer_profile_update_view,
+    customer_password_change_view,
 )
 
 urlpatterns = [
@@ -27,4 +28,9 @@ urlpatterns = [
         customer_profile_update_view,
         name="customer-profile-update"
     ),
+    path(
+        "customer/change-password/",
+        customer_password_change_view,
+        name="customer-change-password"
+    )
 ]

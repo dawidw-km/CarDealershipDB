@@ -54,7 +54,7 @@ urlpatterns = [
         name="employee-registration"
         ),
     path(
-        "/admin/employees/",
+        "admin/employees/",
         EmployeeListView.as_view(),
         name="employee-list"
         ),

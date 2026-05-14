@@ -12,6 +12,7 @@ from ..serializers import (
 )
 from ..permissions import IsEmployeeAdmin, IsAnonymous
 
+
 @extend_schema(tags=["Customers"])
 class CustomerRegistrationView(generics.CreateAPIView):
     """
@@ -20,6 +21,7 @@ class CustomerRegistrationView(generics.CreateAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerRegistrationSerializer
     permission_classes = [IsAnonymous]
+
 
 @extend_schema(tags=["Customers"])
 class CustomerDetailView(generics.RetrieveUpdateAPIView):
@@ -32,6 +34,7 @@ class CustomerDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user.customer_profile
 
+
 class ChangePasswordView(generics.UpdateAPIView):
     """
     Allow authenticated users to change their password.
@@ -42,7 +45,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     def get_object(self):
         return self.request.user
     
-    def update_password(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
 
         user = self.get_object()
         serializer = self.get_serializer(data=request.data)
@@ -58,8 +61,6 @@ class ChangePasswordView(generics.UpdateAPIView):
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
         
 
-
-
 @extend_schema(tags=["Employees"])
 class EmployeeViewSet(viewsets.ModelViewSet):
     """
@@ -69,6 +70,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     serializer_class = EmployeeSerializer
     permission_classes = [IsEmployeeAdmin]
 
+
 @extend_schema(tags=["Employees"])
 class EmployeeRegistrationView(generics.CreateAPIView):
     """
@@ -77,6 +79,7 @@ class EmployeeRegistrationView(generics.CreateAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeRegistrationSerializer
     permission_classes = [IsEmployeeAdmin]
+
 
 @extend_schema(tags=["Employees"])
 class EmployeeListView(generics.ListAPIView):
