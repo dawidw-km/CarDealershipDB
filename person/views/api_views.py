@@ -14,7 +14,7 @@ from ..permissions import IsEmployeeAdmin, IsAnonymous
 
 
 @extend_schema(tags=["Customers"])
-class CustomerRegistrationView(generics.CreateAPIView):
+class CustomerRegistrationView(generics.CreateAPIView):   
     """
     Allow anonymous users to create customer accounts.
     """
@@ -46,31 +46,29 @@ class ChangePasswordView(generics.UpdateAPIView):
         return self.request.user
     
     def update(self, request, *args, **kwargs):
-
         user = self.get_object()
         serializer = self.get_serializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
 
-        if not user.check_password(serializer.validated_data['old_password']):
-            return Response({"old_password": "Wrong password."}, status=status.HTTP_400_BAD_REQUEST)
+        old_password = serializer.validated_data['old_password']
+        new_password = serializer.validated_data['new_password']
+
+        if not user.check_password(old_password):
+           return Response({"old_password": "Wrong password."}, status=status.HTTP_400_BAD_REQUEST)
         
-        user.set_password(serializer.validated_data['new_password'])
+        if (old_password == new_password):
+            return Response(
+                {"new_password": "New password cannot be the same as the old password."},
+                  status=status.HTTP_400_BAD_REQUEST
+                )
+
+        user.set_password(new_password)
         user.save()
 
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
-        
-
-@extend_schema(tags=["Employees"])
-class EmployeeViewSet(viewsets.ModelViewSet):
-    """
-    Allow employee admins to manage employee profiles.
-    """
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeSerializer
-    permission_classes = [IsEmployeeAdmin]
-
-
+    
+ 
 @extend_schema(tags=["Employees"])
 class EmployeeRegistrationView(generics.CreateAPIView):
     """

@@ -4,7 +4,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from cars.views import CarViewSet
 from person.views.api_views import (
     CustomerDetailView,
-    EmployeeViewSet,
     CustomerRegistrationView,
     EmployeeRegistrationView,
     EmployeeListView,
@@ -16,10 +15,6 @@ router = routers.DefaultRouter()
 router.register(
     r"cars",
     CarViewSet
-    )
-router.register(
-    r"employees",
-    EmployeeViewSet
     )
 
 urlpatterns = [

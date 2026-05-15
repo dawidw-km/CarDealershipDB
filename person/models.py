@@ -24,6 +24,10 @@ def validate_hire_date(value):
     if value > date.today():
         raise ValidationError("Hire date cannot be in the future.")
 
+class EmployeeRole(models.TextChoices):
+        WORKER = 'worker', 'Worker'
+        ADMIN = 'admin', 'Admin'
+
 class PersonBase(models.Model):
     
     first_name = models.CharField(
@@ -59,6 +63,10 @@ class Employee(PersonBase):
         WORKER = 'worker', 'Worker'
         ADMIN = 'admin', 'Admin'
 
+    class EmploymentStatus(models.TextChoices):
+        ACTIVE = 'active', 'Active'
+        INACTIVE = 'inactive', 'Inactive'
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -69,6 +77,17 @@ class Employee(PersonBase):
         max_length=10,
         choices=EmployeeRole.choices,
         default=EmployeeRole.WORKER
+    )
+
+    employment_status = models.CharField(
+        max_length=10,
+        choices=EmploymentStatus.choices,
+        default=EmploymentStatus.ACTIVE
+    )
+
+    layoff_date = models.DateField(
+        null=True,
+        blank=True
     )
 
     hire_date = models.DateField(validators=[validate_hire_date])

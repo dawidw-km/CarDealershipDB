@@ -2,7 +2,7 @@ from datetime import date
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from ..models import Customer
+from ..models import Customer, Employee
 
 User = get_user_model()
 
@@ -31,6 +31,21 @@ class CustomerTemplateViewsTestCase(TestCase):
             phone_number="+48123456789",
             address="Warszawska 12",
             date_of_birth=date(1990, 1, 1)
+        )
+    
+    def create_employee_worker(self, email):
+        
+        user = self.create_user(email)
+
+        return Employee.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1)
         )
 
 # Test cases
@@ -122,7 +137,7 @@ class CustomerTemplateViewsTestCase(TestCase):
         )
 
         response = self.client.post(
-            reverse("customer-change-password"),
+            reverse("user-change-password"),
             {
                 "old_password": "testpassword",
                 "new_password": "newtestpassword",
@@ -144,7 +159,7 @@ class CustomerTemplateViewsTestCase(TestCase):
         )
 
         response = self.client.post(
-            reverse("customer-change-password"),
+            reverse("user-change-password"),
             {
                 "old_password": "wrongpassword",
                 "new_password": "newtestpassword",
@@ -158,7 +173,7 @@ class CustomerTemplateViewsTestCase(TestCase):
         self.create_customer("jack.reacher@example.com")
 
         response = self.client.post(
-            reverse("customer-change-password"),
+            reverse("user-change-password"),
             {
                 "old_password": "testpassword",
                 "new_password": "newtestpassword",
@@ -167,5 +182,29 @@ class CustomerTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            "/login/customer/form/?next=/customer/change-password/"
+            "/login/customer/form/?next=/user/change-password/"
+        )
+    
+    def test_employee_can_access_employee_profile(self):
+        employee = self.create_employee_worker("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.get(
+            reverse("employee-profile")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertTemplateUsed(
+            response,
+            "person/employee_profile.html"
+        )
+
+        self.assertIn(
+            "employee",
+            response.context
         )

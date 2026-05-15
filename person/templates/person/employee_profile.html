@@ -1,0 +1,32 @@
+<!--- person/templates/person/employee_profile.html --->
+
+<h1>Employee Profile</h1>
+
+<div>
+    {% csrf_token %}
+
+    <p>
+        <strong>Name:</strong> {{ employee.first_name }} {{ employee.last_name }}
+    </p>
+    <p>
+        <strong>Email:</strong>
+        {{ employee.email }}
+    </p>
+    <p>
+        <strong>Phone Number:</strong>
+        {{ employee.phone_number }}
+    </p>
+    <p>
+        <strong>Role:</strong> 
+        {{ employee.role }}
+    </p>
+    <p>
+        <strong>Hire Date:</strong> 
+        {{ employee.hire_date }}
+    </p>
+    <p>
+        <strong>Salary:</strong> ${{ employee.salary }}
+    </p>
+</div>
+
+<a href="{% url 'user-change-password' %}"><button>Change Password</button></a>

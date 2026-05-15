@@ -23,7 +23,12 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("customer-profile")
+            
+            if hasattr(user, 'customer_profile'):
+                return redirect("customer-profile")
+            
+            if hasattr(user, 'employee_profile'):
+                return redirect("employee-profile")
         
         return render(
             request,
@@ -61,9 +66,9 @@ def customer_registration_view(request):
 
 
 @login_required(login_url="customer-login-form")
-def customer_password_change_view(request):
+def password_change_view(request):
     """
-    Render a form to change the authenticated customer's password.
+    Render a form to change the authenticated user's password.
     """
     if request.method == 'POST':
         serializer = PasswordChangeSerializer(data=request.POST)
@@ -73,7 +78,7 @@ def customer_password_change_view(request):
             if not user.check_password(serializer.validated_data['old_password']):
                 return render(
                     request,
-                    "person/customer_password_change.html",
+                    "person/password_change.html",
                     {'error': 'Wrong password.'}
                 )
             
@@ -83,12 +88,12 @@ def customer_password_change_view(request):
         
         return render(
             request,
-            "person/customer_password_change.html",
+            "person/password_change.html",
             {"errors": serializer.errors}
         )
     return render(
         request,
-        "person/customer_password_change.html"
+        "person/password_change.html"
     )
 
 @login_required(login_url="customer-login-form")
@@ -96,6 +101,9 @@ def customer_profile_view(request):
     """
     Render the authenticated customer's profile page.
     """
+
+    if not hasattr(request.user, 'customer_profile'):
+        return redirect("customer-login-form")
 
     customer = request.user.customer_profile
 
@@ -111,6 +119,10 @@ def customer_profile_update_view(request):
     """
     Render a form to update the authenticated customer's profile.
     """
+
+    if not hasattr(request.user, 'customer_profile'):
+        return redirect("customer-login-form")
+
     customer = request.user.customer_profile
 
     if request.method == "POST":
@@ -137,4 +149,21 @@ def customer_profile_update_view(request):
         request,
         "person/customer_profile_update.html",
         {"customer": customer}
+    )
+
+@login_required(login_url="customer-login-form")
+def employee_profile_view(request):
+    """
+    Render a dashboard page for employees.
+    """
+
+    if not hasattr(request.user, 'employee_profile'):
+        return redirect("customer-login-form")
+
+    employee = request.user.employee_profile
+
+    return render(
+        request,
+        "person/employee_profile.html",
+        {"employee": employee}
     )

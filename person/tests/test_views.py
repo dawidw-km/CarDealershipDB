@@ -1,4 +1,4 @@
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from ..models import Customer, Employee
@@ -6,9 +6,9 @@ from datetime import date
 
 User = get_user_model()
 
-class CustomerViewsTestCase(APITestCase):
+class PersonViewsTestCase(APITestCase):
 
-# Helper methods to create test data
+    # Helper methods to create test data
 
     def create_user(self, email):
         return User.objects.create_user(
@@ -61,7 +61,7 @@ class CustomerViewsTestCase(APITestCase):
         hire_date=date(2020, 1, 1)
     )
  
-# Test cases
+    # Test cases
 
     def test_anonymous_user_can_create_customer_account(self):
         data = {
@@ -200,3 +200,27 @@ class CustomerViewsTestCase(APITestCase):
 
         response = self.client.put("/api/change-password/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_user_cannot_change_password_with_wrong_old_password(self):
+        customer = self.create_customer("account@example.com")
+
+        self.client.force_authenticate(user=customer.user)
+
+        data = {
+            "old_password": "wrongpass",
+            "new_password": "newpass456"
+        }
+        response = self.client.put("/api/change-password/", data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_user_cannot_change_password_to_same_password(self):
+        customer = self.create_customer("account@example.com")
+
+        self.client.force_authenticate(user=customer.user)
+
+        data = {
+            "old_password": "testpass123",
+            "new_password": "testpass123"
+        }
+        response = self.client.put("/api/change-password/", data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
