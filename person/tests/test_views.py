@@ -23,44 +23,44 @@ class PersonViewsTestCase(APITestCase):
         user = self.create_user(email)
 
         return Customer.objects.create(
-        user=user,
-        first_name="Jan",
-        last_name="Nowak",
-        email=email,
-        phone_number="123123123",
-        address="Warszawa 12",
-        date_of_birth=date(2000, 1, 1)
-    )
+            user=user,
+            first_name="Jan",
+            last_name="Nowak",
+            email=email,
+            phone_number="+48123123123",
+            address="Warszawa 12",
+            date_of_birth=date(2000, 1, 1)
+        )
 
     def create_employee_admin(self, email):
 
         user = self.create_user(email)
 
         return Employee.objects.create(
-        user=user,
-        first_name="Adam",
-        last_name="Kowalski",
-        email=email,
-        phone_number="+48321321321",
-        role=Employee.EmployeeRole.ADMIN,
-        salary=5000,
-        hire_date=date(2020, 1, 1)
-    )
+            user=user,
+            first_name="Adam",
+            last_name="Kowalski",
+            email=email,
+            phone_number="+48321321321",
+            role=Employee.EmployeeRole.ADMIN,
+            salary=5000,
+            hire_date=date(2020, 1, 1)
+        )
 
     def create_employee_worker(self, email):
 
         user = self.create_user(email)
 
         return Employee.objects.create(
-        user=user,
-        first_name="Adam",
-        last_name="Kowalski",
-        email=email,
-        phone_number="321321321",
-        role=Employee.EmployeeRole.WORKER,
-        salary=5000,
-        hire_date=date(2020, 1, 1)
-    )
+            user=user,
+            first_name="Adam",
+            last_name="Kowalski",
+            email=email,
+            phone_number="+48321321321",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1)
+        )
  
     # Test cases
 
@@ -285,3 +285,58 @@ class PersonViewsTestCase(APITestCase):
         self.assertEqual(employee2.first_name, "Adam")
         self.assertEqual(employee2.last_name, "Kowalski")
         self.assertEqual(employee2.phone_number, "+48321321321")
+
+    def test_admin_employee_employment_status_change_on_update(self):
+
+        admin = self.create_employee_admin("admin@example.com")
+
+        employee = self.create_employee_worker("worker@example.com")
+
+        self.client.force_authenticate(user=admin.user)
+
+        employee_id = employee.id
+
+        data = {
+            "employment_status": Employee.EmploymentStatus.INACTIVE,
+            "layoff_date": "2024-01-01"
+        }
+
+        response = self.client.patch(
+            reverse("admin-employee-employment-status-update", args=[employee_id]),
+            data,
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        employee.refresh_from_db()
+
+        self.assertEqual(employee.employment_status, Employee.EmploymentStatus.INACTIVE)
+        self.assertEqual(employee.layoff_date, date(2024, 1, 1))
+
+    
+    def test_non_admin_employee_cannot_change_employment_status(self):
+
+        employee1 = self.create_employee_worker("worker1@gmail.com")
+        employee2 = self.create_employee_worker("worker2@gmail.com")
+
+        self.client.force_authenticate(user=employee1.user)
+
+        employee_id = employee2.id
+
+        data = {
+            "employment_status": Employee.EmploymentStatus.INACTIVE,
+            "layoff_date": "2024-01-01"
+        }
+
+        response = self.client.patch(
+            reverse("admin-employee-employment-status-update", args=[employee_id]),
+            data,
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        employee2.refresh_from_db()
+
+        self.assertEqual(employee2.employment_status, Employee.EmploymentStatus.ACTIVE)

@@ -7,9 +7,9 @@ from ..models import Customer, Employee
 User = get_user_model()
 
 
-class CustomerTemplateViewsTestCase(TestCase):
+class PersonTemplateViewsTestCase(TestCase):
 
-# Helper methods to create test data
+    # Helper methods to create test data
 
     def create_user(self, email):
 
@@ -63,7 +63,7 @@ class CustomerTemplateViewsTestCase(TestCase):
             hire_date=date(2020, 1, 1)
         )
 
-# Test cases
+    # Test cases
 
     def test_logged_user_can_access_customer_profile(self):
         
@@ -256,3 +256,66 @@ class CustomerTemplateViewsTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+    
+    def test_admin_employee_can_update_employee_profile(self):
+        admin = self.create_employee_admin("jack.reacher@example.com")
+
+        worker = self.create_employee_worker("worker@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("admin-employee-update-template", kwargs={"pk": worker.pk}),
+            {
+                "first_name": "Jayce",
+                "last_name": "Arcane",
+                "phone_number": "+48765432109",
+                "role": Employee.EmployeeRole.WORKER,
+                "salary": 5000,
+                "hire_date": "2020-01-01"
+            }
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("employee-list")
+        )
+
+        worker.refresh_from_db()
+
+        self.assertEqual(worker.first_name, "Jayce")
+        self.assertEqual(worker.last_name, "Arcane")
+
+
+    def test_not_admin_employee_cannot_update_employee_profile(self):
+        worker1 = self.create_employee_worker("worker1@example.com")
+        worker2 = self.create_employee_worker("worker2@example.com")
+
+        self.client.login(
+            username="worker1@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("admin-employee-update-template", kwargs={"pk": worker2.pk}),
+            {
+                "first_name": "Jayce",
+                "last_name": "Arcane",
+                "phone_number": "+48765432109",
+                "role": Employee.EmployeeRole.WORKER,
+                "salary": 5000,
+                "hire_date": "2020-01-01"
+            }
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        worker2.refresh_from_db()
+
+        self.assertEqual(worker2.first_name, "Jack")
+        self.assertEqual(worker2.last_name, "Reacher")
+        self.assertEqual(worker2.phone_number, "+48123456789")

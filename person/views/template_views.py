@@ -7,6 +7,7 @@ from ..serializers import (
     CustomerRegistrationSerializer,
     CustomerDetailSerializer,
     PasswordChangeSerializer,
+    AdminEmployeeUpdateSerializer,
 )
 
 def login_view(request):
@@ -184,4 +185,44 @@ def employee_list_view(request):
         request,
         "person/employee_list.html",
         {"employees": employees}
+    )
+
+@login_required(login_url="customer-login-form")
+def admin_employee_update_view(request, pk):
+    """
+    Render a form for employee admins to update employee profiles.
+    """
+
+    if not hasattr(request.user, 'employee_profile') or request.user.employee_profile.role != Employee.EmployeeRole.ADMIN:
+        return HttpResponseForbidden("You do not have permission to view this page.")
+    
+    try:
+        employee = Employee.objects.get(pk=pk)
+    except Employee.DoesNotExist:
+        return redirect("employee-list")
+
+    if request.method == "POST":
+        serializer = AdminEmployeeUpdateSerializer(
+            employee,
+            data=request.POST,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("employee-list")
+
+        return render(
+            request,
+            "person/admin_employee_update.html",
+            {
+                "employee": employee,
+                "errors": serializer.errors
+            }
+        )
+
+    return render(
+        request,
+        "person/admin_employee_update.html",
+        {"employee": employee}
     )

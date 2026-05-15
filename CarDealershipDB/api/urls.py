@@ -10,6 +10,7 @@ from person.views.api_views import (
     CustomerDetailView,
     ChangePasswordView,
     AdminEmployeeUpdateView,
+    AdminEmployeeEmploymentStatusUpdateView,
 )
 
 router = routers.DefaultRouter()
@@ -38,12 +39,12 @@ urlpatterns = [
         "customer/me/",
         CustomerDetailView.as_view(),
         name="customer-detail"
-    ),
+        ),
     path(
         "change-password/",
         ChangePasswordView.as_view(),
         name="change-password"
-    ),
+        ),
     path(
         "register/employee/",
         EmployeeRegistrationView.as_view(),
@@ -58,6 +59,11 @@ urlpatterns = [
         "admin/employees/<int:pk>/",
         AdminEmployeeUpdateView.as_view(),
         name="admin-employee-update"
+        ),
+    path(
+        "admin/employees/<int:pk>/employment-status/",
+        AdminEmployeeEmploymentStatusUpdateView.as_view(),
+        name="admin-employee-employment-status-update"
         ),
     path(
         "token/",

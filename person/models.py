@@ -11,6 +11,9 @@ name_validator = RegexValidator(
 )
 
 def validate_birth_date(value):
+    """
+    Ensures that the birth date is not in the future and that the customer is at least 18 years old.
+    """
     today = date.today()
 
     if value > today:
@@ -20,15 +23,23 @@ def validate_birth_date(value):
     if age < 18:
         raise ValidationError("User has to be at least 18 years old.")
     
-def validate_hire_date(value):
+    
+def validate_no_future_date(value):
+    """
+    Ensures that the date is not in the future.
+    """
     if value > date.today():
-        raise ValidationError("Hire date cannot be in the future.")
+        raise ValidationError("Date cannot be in the future.")
 
-class EmployeeRole(models.TextChoices):
-        WORKER = 'worker', 'Worker'
-        ADMIN = 'admin', 'Admin'
+
+def validate_hire_date(value):
+    validate_no_future_date(value)
+
 
 class PersonBase(models.Model):
+    """
+    Abstract base model for common fields between Customer and Employee. Not intended to be used directly.
+    """
     
     first_name = models.CharField(
         max_length=40,
@@ -86,7 +97,8 @@ class Employee(PersonBase):
     )
     layoff_date = models.DateField(
         null=True,
-        blank=True
+        blank=True,
+        validators=[validate_no_future_date]
     )
 
     hire_date = models.DateField(validators=[validate_hire_date])

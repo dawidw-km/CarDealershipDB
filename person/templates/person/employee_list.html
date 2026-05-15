@@ -18,6 +18,7 @@
             <th>Employment Status</th>
             <th>Layoff Date</th>
             <th>Created At</th>
+            <th>Actions</th>
         </tr>
     </thead>
 
@@ -35,6 +36,11 @@
                 <td>{{ employee.employment_status }}</td>
                 <td>{{ employee.layoff_date }}</td>
                 <td>{{ employee.created_at }}</td>
+                <td>
+                    <a href="{% url 'admin-employee-update-template' employee.pk %}">
+                    Edit
+                    </a>
+                </td>
             </tr>
         {% empty %}
             <tr>

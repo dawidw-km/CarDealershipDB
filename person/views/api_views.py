@@ -10,6 +10,7 @@ from ..serializers import (
     EmployeeRegistrationSerializer,
     CustomerDetailSerializer,
     AdminEmployeeUpdateSerializer,
+    AdminEmployeeEmploymentStatusUpdateSerializer
 )
 from ..permissions import IsEmployeeAdmin, IsAnonymous
 
@@ -97,4 +98,14 @@ class AdminEmployeeUpdateView(generics.UpdateAPIView):
     """
     queryset = Employee.objects.all()
     serializer_class = AdminEmployeeUpdateSerializer
+    permission_classes = [IsEmployeeAdmin]
+
+
+@extend_schema(tags=["Employees"])
+class AdminEmployeeEmploymentStatusUpdateView(generics.UpdateAPIView):
+    """
+    Allow employee admins to update employee employment status.
+    """
+    queryset = Employee.objects.all()
+    serializer_class = AdminEmployeeEmploymentStatusUpdateSerializer
     permission_classes = [IsEmployeeAdmin]

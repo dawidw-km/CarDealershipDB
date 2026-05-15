@@ -5,6 +5,9 @@ from .models import Employee, Customer
 User = get_user_model()
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for customer registration. Creates a new Django authentication user and related customer profile.
+    """
     password = serializers.CharField(write_only=True, min_length=5)
 
     class Meta:
@@ -39,6 +42,9 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         return customer
     
 class EmployeeRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for employee registration. Creates a new Django authentication user and related employee profile.
+    """
     password = serializers.CharField(write_only=True, min_length=5)
 
     class Meta:
@@ -151,11 +157,23 @@ class AdminEmployeeUpdateSerializer(serializers.ModelSerializer):
             "role",
             "hire_date",
             "salary",
-            "employment_status",
-            "layoff_date",
             "created_at"
         ]
         read_only_fields = [
             "id",
-            "created_at"
+            "created_at",
+            "email",
         ]
+
+class AdminEmployeeEmploymentStatusUpdateSerializer(serializers.ModelSerializer):
+    """
+    Allow admin employees to update only the employment status and layoff date of an employee.
+    """
+    class Meta:
+        model = Employee
+        fields = [
+            "id",
+            "employment_status",
+            "layoff_date"
+        ]
+        read_only_fields = ["id"]
