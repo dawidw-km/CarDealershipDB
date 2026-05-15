@@ -88,7 +88,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "hire_date",
-            "salary"
+            "salary",
+            "created_at",
+            "employment_status",
+            "layoff_date"
         ]
         read_only_fields = [
             "id",
@@ -107,12 +110,13 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
             "role",
             "hire_date",
             "salary",
-            "created_at"
+            "created_at",
         ]
         read_only_fields = [
             "id",
             "email",
             "created_at",
+
         ]
 
 class CustomerDetailSerializer(serializers.ModelSerializer):
@@ -133,4 +137,25 @@ class CustomerDetailSerializer(serializers.ModelSerializer):
             "email",
             "created_at",
             "date_of_birth"
+        ]
+
+class AdminEmployeeUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "role",
+            "hire_date",
+            "salary",
+            "employment_status",
+            "layoff_date",
+            "created_at"
+        ]
+        read_only_fields = [
+            "id",
+            "created_at"
         ]

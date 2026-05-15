@@ -9,6 +9,7 @@ from person.views.api_views import (
     EmployeeListView,
     CustomerDetailView,
     ChangePasswordView,
+    AdminEmployeeUpdateView,
 )
 
 router = routers.DefaultRouter()
@@ -52,6 +53,11 @@ urlpatterns = [
         "admin/employees/",
         EmployeeListView.as_view(),
         name="employee-list"
+        ),
+    path(
+        "admin/employees/<int:pk>/",
+        AdminEmployeeUpdateView.as_view(),
+        name="admin-employee-update"
         ),
     path(
         "token/",

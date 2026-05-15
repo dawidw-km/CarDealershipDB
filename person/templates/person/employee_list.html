@@ -1,0 +1,47 @@
+<!-- person/templates/person/employee_list.html -->
+
+<!-- person/templates/person/employee_list.html -->
+
+<h1>Employee List</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Role</th>
+            <th>Hire Date</th>
+            <th>Salary</th>
+            <th>Employment Status</th>
+            <th>Layoff Date</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for employee in employees %}
+            <tr>
+                <td>{{ employee.id }}</td>
+                <td>{{ employee.first_name }}</td>
+                <td>{{ employee.last_name }}</td>
+                <td>{{ employee.email }}</td>
+                <td>{{ employee.phone_number }}</td>
+                <td>{{ employee.get_role_display }}</td>
+                <td>{{ employee.hire_date }}</td>
+                <td>{{ employee.salary }}</td>
+                <td>{{ employee.employment_status }}</td>
+                <td>{{ employee.layoff_date }}</td>
+                <td>{{ employee.created_at }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="11">No employees found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'employee-profile' %}"><button>My Profile</button></a>

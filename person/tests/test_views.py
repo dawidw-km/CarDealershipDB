@@ -1,5 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
+from django.urls import reverse
 from django.contrib.auth import get_user_model
 from ..models import Customer, Employee
 from datetime import date
@@ -40,7 +41,7 @@ class PersonViewsTestCase(APITestCase):
         first_name="Adam",
         last_name="Kowalski",
         email=email,
-        phone_number="321321321",
+        phone_number="+48321321321",
         role=Employee.EmployeeRole.ADMIN,
         salary=5000,
         hire_date=date(2020, 1, 1)
@@ -119,7 +120,7 @@ class PersonViewsTestCase(APITestCase):
             "address": "Gdańsk 56"
         }
 
-        response = self.client.put("/api/customer/me/", data, format="json")
+        response = self.client.patch("/api/customer/me/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -200,6 +201,7 @@ class PersonViewsTestCase(APITestCase):
 
         response = self.client.put("/api/change-password/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(customer.user.check_password("newpass456"))
 
     def test_user_cannot_change_password_with_wrong_old_password(self):
         customer = self.create_customer("account@example.com")
@@ -224,3 +226,62 @@ class PersonViewsTestCase(APITestCase):
         }
         response = self.client.put("/api/change-password/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_employee_can_update_employee_profile(self):
+
+        admin = self.create_employee_admin("jack.reacher@example.com")
+        employee = self.create_employee_worker("mike.Tyson@example.com")
+
+        self.client.force_authenticate(user=admin.user)
+
+        employee_id = employee.id
+
+        data = {
+            "first_name": "Jayce",
+            "last_name": "Arcane",
+            "phone_number": "+48765432109"
+        }
+
+        response = self.client.patch(
+            reverse("admin-employee-update", args=[employee_id]),
+            data,
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        employee.refresh_from_db()
+
+        self.assertEqual(employee.first_name, "Jayce")
+        self.assertEqual(employee.last_name, "Arcane")
+        self.assertEqual(employee.phone_number, "+48765432109")
+
+    
+    def test_non_admin_employee_cannot_update_employee_profile(self):
+
+        employee1 = self.create_employee_worker("worker@example.com")
+        employee2 = self.create_employee_worker("worker2@example.com")
+
+        self.client.force_authenticate(user=employee1.user)
+
+        employee_id = employee2.id
+
+        data = {
+            "first_name": "Jayce",
+            "last_name": "Arcane",
+            "phone_number": "+48765432109"
+        }
+
+        response = self.client.patch(
+            reverse("admin-employee-update", args=[employee_id]),
+            data,
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        employee2.refresh_from_db()
+
+        self.assertEqual(employee2.first_name, "Adam")
+        self.assertEqual(employee2.last_name, "Kowalski")
+        self.assertEqual(employee2.phone_number, "+48321321321")

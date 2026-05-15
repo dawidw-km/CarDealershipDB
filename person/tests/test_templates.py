@@ -47,6 +47,21 @@ class CustomerTemplateViewsTestCase(TestCase):
             salary=5000,
             hire_date=date(2020, 1, 1)
         )
+    
+    def create_employee_admin(self, email):
+        
+        user = self.create_user(email)
+
+        return Employee.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.ADMIN,
+            salary=5000,
+            hire_date=date(2020, 1, 1)
+        )
 
 # Test cases
 
@@ -149,6 +164,7 @@ class CustomerTemplateViewsTestCase(TestCase):
             reverse("customer-login-form")
         )
     
+
     def test_logged_user_cannot_change_password_with_wrong_old_password(self):
 
         self.create_customer("jack.reacher@example.com")
@@ -168,6 +184,7 @@ class CustomerTemplateViewsTestCase(TestCase):
 
         self.assertEqual(response.context["error"], "Wrong password.")
 
+
     def test_not_logged_user_cannot_change_password(self):
 
         self.create_customer("jack.reacher@example.com")
@@ -185,6 +202,7 @@ class CustomerTemplateViewsTestCase(TestCase):
             "/login/customer/form/?next=/user/change-password/"
         )
     
+
     def test_employee_can_access_employee_profile(self):
         employee = self.create_employee_worker("jack.reacher@example.com")
 
@@ -208,3 +226,33 @@ class CustomerTemplateViewsTestCase(TestCase):
             "employee",
             response.context
         )
+    
+
+    def test_not_admin_employee_cannot_access_employee_list(self):
+        self.create_employee_worker("worker1@example.com")
+
+        self.client.login(
+            username="worker1@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.get(
+            reverse("employee-list")
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    
+    def test_admin_employee_can_access_employee_list(self):
+        admin = self.create_employee_admin("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+        
+        response = self.client.get(
+            reverse("employee-list")
+        )
+
+        self.assertEqual(response.status_code, 200)

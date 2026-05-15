@@ -84,7 +84,6 @@ class Employee(PersonBase):
         choices=EmploymentStatus.choices,
         default=EmploymentStatus.ACTIVE
     )
-
     layoff_date = models.DateField(
         null=True,
         blank=True

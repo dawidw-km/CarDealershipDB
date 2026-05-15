@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from ..models import Employee
 from ..serializers import (
     CustomerRegistrationSerializer,
     CustomerDetailSerializer,
@@ -166,4 +168,20 @@ def employee_profile_view(request):
         request,
         "person/employee_profile.html",
         {"employee": employee}
+    )
+
+@login_required(login_url="customer-login-form")
+def employee_list_view(request):
+    """
+    Render a list of all employees for employee admins.
+    """
+    
+    if not hasattr(request.user, 'employee_profile') or request.user.employee_profile.role != Employee.EmployeeRole.ADMIN:
+        return HttpResponseForbidden("You do not have permission to view this page.")
+    
+    employees = Employee.objects.all()
+    return render(
+        request,
+        "person/employee_list.html",
+        {"employees": employees}
     )
