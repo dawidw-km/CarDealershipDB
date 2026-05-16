@@ -1,5 +1,6 @@
 from django.urls import path
 from person.views.template_views import (
+    admin_employee_employment_status_update_view,
     customer_registration_view,
     login_view,
     customer_profile_view,
@@ -50,5 +51,10 @@ urlpatterns = [
         "employee/update/<int:pk>/",
         admin_employee_update_view,
         name="admin-employee-update-template"
+    ),
+    path(
+        "andmin/employees/<int:pk>/employment-status/update/",
+        admin_employee_employment_status_update_view,
+        name="admin-employee-employment-status-update-template"
     )
 ]

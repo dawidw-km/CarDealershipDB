@@ -4,10 +4,15 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from ..models import Employee
 from ..serializers import (
+    AdminEmployeeEmploymentStatusUpdateSerializer,
     CustomerRegistrationSerializer,
     CustomerDetailSerializer,
     PasswordChangeSerializer,
     AdminEmployeeUpdateSerializer,
+)
+from person.decorators import (
+    active_employee_required,
+    admin_employee_required
 )
 
 def login_view(request):
@@ -155,6 +160,7 @@ def customer_profile_update_view(request):
     )
 
 @login_required(login_url="customer-login-form")
+@active_employee_required
 def employee_profile_view(request):
     """
     Render a dashboard page for employees.
@@ -172,13 +178,12 @@ def employee_profile_view(request):
     )
 
 @login_required(login_url="customer-login-form")
+@active_employee_required
+@admin_employee_required
 def employee_list_view(request):
     """
     Render a list of all employees for employee admins.
     """
-    
-    if not hasattr(request.user, 'employee_profile') or request.user.employee_profile.role != Employee.EmployeeRole.ADMIN:
-        return HttpResponseForbidden("You do not have permission to view this page.")
     
     employees = Employee.objects.all()
     return render(
@@ -188,13 +193,12 @@ def employee_list_view(request):
     )
 
 @login_required(login_url="customer-login-form")
+@active_employee_required
+@admin_employee_required
 def admin_employee_update_view(request, pk):
     """
     Render a form for employee admins to update employee profiles.
     """
-
-    if not hasattr(request.user, 'employee_profile') or request.user.employee_profile.role != Employee.EmployeeRole.ADMIN:
-        return HttpResponseForbidden("You do not have permission to view this page.")
     
     try:
         employee = Employee.objects.get(pk=pk)
@@ -224,5 +228,44 @@ def admin_employee_update_view(request, pk):
     return render(
         request,
         "person/admin_employee_update.html",
+        {"employee": employee}
+    )
+
+
+@login_required(login_url="customer-login-form")
+@active_employee_required
+@admin_employee_required
+def admin_employee_employment_status_update_view(request, pk):
+    """
+    Render a form for employee admins to update employee employment status.
+    """
+    
+    try:
+        employee = Employee.objects.get(pk=pk)
+    except Employee.DoesNotExist:
+        return redirect("employee-list")
+    
+    if request.method == "POST":
+        serializer = AdminEmployeeEmploymentStatusUpdateSerializer(
+            employee,
+            data=request.POST
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("employee-list")
+        
+        return render(
+            request,
+            "person/admin_employee_employment_status_update.html",
+            {
+                "employee": employee,
+                "errors": serializer.errors
+            }
+        )
+
+    return render(
+        request,
+        "person/admin_employee_employment_status_update.html",
         {"employee": employee}
     )

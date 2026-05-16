@@ -1,0 +1,54 @@
+<!-- person/templates/person/admin_employee_employment_status_update.html -->
+
+<h1>Update Employee Employment Status</h1>
+
+<p>
+    <strong>Employee:</strong> <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
+</p>
+
+{% if errors %}
+    <div>
+        <h3>Errors:</h3>
+        <ul>
+            {% for field, field_errors in errors.items %}
+                {% for error in field_errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <p>
+            <strong>Email:</strong> {{ employee.email }}
+        </p>
+    </div>
+
+    <div>
+        <label for="employment_status">Employment Status:</label>
+        <select name="employment_status" id="employment_status">
+            <option value="active" {% if employee.employment_status == "active" %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if employee.employment_status == "inactive" %}selected{% endif %}>Inactive</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="layoff_date">Layoff Date:</label>
+
+        <input 
+        type="date"
+        id="layoff_date"
+        name="layoff_date"
+        value="{{ employee.layoff_date|date:'Y-m-d' }}"
+        >
+        <input type="submit" value="Update Employment Status">
+    </div>
+</form>
+
+<p>
+    <a href="{% url 'employee-list' %}">Back to employee list</a>
+</p>

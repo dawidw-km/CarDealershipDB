@@ -319,3 +319,56 @@ class PersonTemplateViewsTestCase(TestCase):
         self.assertEqual(worker2.first_name, "Jack")
         self.assertEqual(worker2.last_name, "Reacher")
         self.assertEqual(worker2.phone_number, "+48123456789")
+
+    
+    def test_admin_employee_can_update_employee_employment_status(self):
+        admin = self.create_employee_admin("jack.reacher@example.com")
+
+        worker = self.create_employee_worker("worker1@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("admin-employee-employment-status-update-template", kwargs={"pk": worker.pk}),
+            {
+                "employment_status": Employee.EmploymentStatus.INACTIVE,
+                "layoff_date": "2024-01-01"
+            }
+        )
+        
+        self.assertRedirects(
+            response,
+            reverse("employee-list")
+        )
+
+        worker.refresh_from_db()
+
+        self.assertEqual(worker.employment_status, Employee.EmploymentStatus.INACTIVE)
+        self.assertEqual(worker.layoff_date, date(2024, 1, 1))
+
+
+    def test_not_admin_employee_cannot_update_employee_employment_status(self):
+        worker1 = self.create_employee_worker("worker1@example.com")
+        worker2 = self.create_employee_worker("worker2@example.com")
+        
+        self.client.login(
+            username="worker1@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("admin-employee-employment-status-update-template", kwargs={"pk": worker2.pk}),
+            {
+                "employment_status": Employee.EmploymentStatus.INACTIVE,
+                "layoff_date": "2024-01-01"
+            }
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        worker2.refresh_from_db()
+
+        self.assertEqual(worker2.employment_status, Employee.EmploymentStatus.ACTIVE)
