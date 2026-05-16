@@ -2,7 +2,7 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from ..models import Customer
+from ..models import Customer, Employee
 
 User = get_user_model()
 
@@ -180,3 +180,51 @@ class CustomerTestCase(TestCase):
 
         with self.assertRaises(ValidationError):
             self.customer_9.full_clean()
+
+    def test_employee_role_choices(self):
+
+        self.user = self.create_user("testuser9@gmail.com")
+
+        self.employee_10=Employee(
+            user=self.user,
+            first_name='Jan',
+            last_name='Kowalski',
+            email='janek.kowalski@gmail.com',
+            phone_number='512512512',
+            role=Employee.EmployeeRole.ADMIN,
+            salary=5000,
+            hire_date=date(2020, 1, 1)
+        )
+
+        with self.assertRaises(ValidationError):
+            self.employee_10.full_clean()
+
+        self.assertEqual(
+            self.employee_10.role,
+            Employee.EmployeeRole.WORKER
+        )
+
+    def test_employee_employment_status_choices(self):
+
+        self.user = self.create_user("testuser10@gmail.com")
+
+        self.employee_11=Employee(
+            user=self.user,
+            first_name='Jan',
+            last_name='Kowalski',
+            email='janek.kowalski@gmail.com',
+            phone_number='512512512',
+            role=Employee.EmployeeRole.ADMIN,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+            employment_status=Employee.EmploymentStatus.ACTIVE,
+            layoff_date=date(2020, 1, 1)
+        )
+
+        with self.assertRaises(ValidationError):
+            self.employee_11.full_clean()
+
+        self.assertEqual(
+            self.employee_11.employment_status,
+            Employee.EmploymentStatus.INACTIVE
+        )

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, generics, status
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
@@ -10,9 +10,19 @@ from ..serializers import (
     EmployeeRegistrationSerializer,
     CustomerDetailSerializer,
     AdminEmployeeUpdateSerializer,
-    AdminEmployeeEmploymentStatusUpdateSerializer
+    AdminEmployeeEmploymentStatusUpdateSerializer,
+    EmployeeTokenObtainPairSerializer
 )
 from ..permissions import IsEmployeeAdmin, IsAnonymous
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+@extend_schema(tags=["Authentication"])
+class EmployeeLoginView(TokenObtainPairView):
+    """
+    Return JWT tokens only if user is allowed to sign in.
+    """
+    serializer_class = EmployeeTokenObtainPairSerializer
 
 
 @extend_schema(tags=["Customers"])

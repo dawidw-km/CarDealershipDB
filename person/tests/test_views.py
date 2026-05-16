@@ -340,3 +340,51 @@ class PersonViewsTestCase(APITestCase):
         employee2.refresh_from_db()
 
         self.assertEqual(employee2.employment_status, Employee.EmploymentStatus.ACTIVE)
+
+
+    def test_inactive_employee_cannot_sign_in(self):
+        user = self.create_user("inactive@example.com")
+
+        Employee.objects.create(
+            user=user,
+            first_name="Adam",
+            last_name="Kowalski",
+            email="inactive@example.com",
+            phone_number="+48321321321",
+            role=Employee.EmployeeRole.ADMIN,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+            employment_status=Employee.EmploymentStatus.INACTIVE,
+            layoff_date=date(2024, 1, 1),
+        )
+
+        response = self.client.post(
+            reverse("employee-token-obtain-pair"),
+            {
+                "username": "inactive@example.com",
+                "password": "testpass123",
+            },  
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "Your employee account is inactive.")
+
+    def test_active_employee_can_sign_in(self):
+        employee = self.create_employee_admin("active@example.com")
+
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.post(
+            reverse("employee-token-obtain-pair"),
+            {
+                "username": "active@example.com",
+                "password": "testpass123",
+            },
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 from cars.views import CarViewSet
 from person.views.api_views import (
     CustomerDetailView,
@@ -11,6 +11,7 @@ from person.views.api_views import (
     ChangePasswordView,
     AdminEmployeeUpdateView,
     AdminEmployeeEmploymentStatusUpdateView,
+    EmployeeLoginView,
 )
 
 router = routers.DefaultRouter()
@@ -66,13 +67,13 @@ urlpatterns = [
         name="admin-employee-employment-status-update"
         ),
     path(
-        "token/",
-        TokenObtainPairView.as_view(),
-        name="token_obtain_pair"
+        "employee/token/",
+        EmployeeLoginView.as_view(),
+        name="employee-token-obtain-pair"
         ),
     path(
-        "token/refresh/",
+        "employee/token/refresh/",
         TokenRefreshView.as_view(),
-        name="token_refresh"
+        name="employee-token-refresh"
         ),
 ]
