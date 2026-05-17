@@ -203,7 +203,7 @@ def admin_employee_update_view(request, pk):
     try:
         employee = Employee.objects.get(pk=pk)
     except Employee.DoesNotExist:
-        return redirect("employee-list")
+        return redirect("employee-list-template")
 
     if request.method == "POST":
         serializer = AdminEmployeeUpdateSerializer(
@@ -214,7 +214,7 @@ def admin_employee_update_view(request, pk):
 
         if serializer.is_valid():
             serializer.save()
-            return redirect("employee-list")
+            return redirect("employee-list-template")
 
         return render(
             request,
@@ -233,8 +233,8 @@ def admin_employee_update_view(request, pk):
 
 
 @login_required(login_url="customer-login-form")
-@active_employee_required
 @admin_employee_required
+@active_employee_required
 def admin_employee_employment_status_update_view(request, pk):
     """
     Render a form for employee admins to update employee employment status.
@@ -243,7 +243,7 @@ def admin_employee_employment_status_update_view(request, pk):
     try:
         employee = Employee.objects.get(pk=pk)
     except Employee.DoesNotExist:
-        return redirect("employee-list")
+        return redirect("employee-list-template")
     
     if request.method == "POST":
         serializer = AdminEmployeeEmploymentStatusUpdateSerializer(
@@ -253,7 +253,7 @@ def admin_employee_employment_status_update_view(request, pk):
 
         if serializer.is_valid():
             serializer.save()
-            return redirect("employee-list")
+            return redirect("employee-list-template")
         
         return render(
             request,

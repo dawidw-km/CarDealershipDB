@@ -1,10 +1,11 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from ..models import Customer, Employee
 from ..serializers import (
     EmployeeSerializer,
+    EmployeeDetailSerializer,
     PasswordChangeSerializer,
     CustomerRegistrationSerializer,
     EmployeeRegistrationSerializer,
@@ -13,7 +14,7 @@ from ..serializers import (
     AdminEmployeeEmploymentStatusUpdateSerializer,
     EmployeeTokenObtainPairSerializer
 )
-from ..permissions import IsEmployeeAdmin, IsAnonymous
+from ..permissions import IsEmployeeAdmin, IsAnonymous, IsEmployee
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
@@ -25,7 +26,23 @@ class EmployeeLoginView(TokenObtainPairView):
     serializer_class = EmployeeTokenObtainPairSerializer
 
 
-@extend_schema(tags=["Customers"])
+@extend_schema(
+    tags=["Customers"],
+    examples=[
+        OpenApiExample(
+            name="Customer registration",
+            value={
+                "first_name": "John",
+                "last_name": "Snow",
+                "email": "customer@example.com",
+                "phone_number": "+48123456789",
+                "address": "Warszawa 12",
+                "date_of_birth": "1990-01-01",
+                "password": "StrongPassword123"
+            }
+        )
+    ]
+)
 class CustomerRegistrationView(generics.CreateAPIView):   
     """
     Allow anonymous users to create customer accounts.
@@ -46,7 +63,7 @@ class CustomerDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user.customer_profile
 
-
+@extend_schema(tags=["Authentication"])
 class ChangePasswordView(generics.UpdateAPIView):
     """
     Allow authenticated users to change their password.
@@ -81,7 +98,25 @@ class ChangePasswordView(generics.UpdateAPIView):
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
     
  
-@extend_schema(tags=["Employees"])
+@extend_schema(
+    tags=["Employees"],
+    examples=[
+        OpenApiExample(
+            name="Employee registration",
+            value={
+                "first_name": "John",
+                "last_name": "Snow",
+                "email": "employee@example.com",
+                "phone_number": "+48123456789",
+                "role": "worker",
+                "hire_date": "2026-05-17",
+                "salary": "10000.00",
+                "password": "StrongPassword123"
+            },
+            request_only=True,
+        )
+    ]
+)
 class EmployeeRegistrationView(generics.CreateAPIView):
     """
     Allow employee admins to create employee accounts.
@@ -92,11 +127,23 @@ class EmployeeRegistrationView(generics.CreateAPIView):
 
 
 @extend_schema(tags=["Employees"])
+class EmployeeDetailView(generics.RetrieveAPIView):
+    """
+    Allow employee admins to retrieve employee profiles.
+    """
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeDetailSerializer
+    permission_classes = [IsAuthenticated, IsEmployee]
+
+    def get_object(self):
+        return self.request.user.employee_profile
+
+@extend_schema(tags=["Employees"])
 class EmployeeListView(generics.ListAPIView):
     """
     Allow employee admins to list all employee profiles.
     """
-    queryset = Employee.objects.all()
+    queryset = Employee.objects.all().order_by("id")
     serializer_class = EmployeeSerializer
     permission_classes = [IsEmployeeAdmin]
 

@@ -1,4 +1,4 @@
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, force_authenticate
 from rest_framework import status
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -370,6 +370,7 @@ class PersonViewsTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data["detail"], "Your employee account is inactive.")
 
+
     def test_active_employee_can_sign_in(self):
         employee = self.create_employee_admin("active@example.com")
 
@@ -386,5 +387,46 @@ class PersonViewsTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    
+    def test_employee_can_access_own_profile(self):
+        employee = self.create_employee_worker("employee@example.com")
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("employee-detail"),
+            {
+                "username": "employee@example.com",
+                "password": "testpass123"
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["first_name"], "Adam")
+
 
     
+    def test_non_employee_user_cannot_access_api_employee_me(self):
+        customer = self.create_customer("customer@example.com")
+        self.client.force_authenticate(user=customer.user)
+
+        response = self.client.get(
+            reverse("employee-detail"),
+            {
+                "username": "customer@example.com",
+                "password": "testpass123"
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+    def test_anonymous_user_cannot_access_employee_me(self):
+        response = self.client.get(
+            reverse("employee-detail")
+            )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+    def test_anonymous_user_cannot_access_admin_employee_list(self):
+        response = self.client.get(
+            reverse("employee-list")
+            )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

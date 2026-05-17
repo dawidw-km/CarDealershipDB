@@ -1,3 +1,4 @@
+from datetime import date
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -49,6 +50,29 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
             "date_of_birth",
             "password"
         ]
+        extra_kwargs = {
+            "first_name": {
+                "help_text": "First name of the customer"
+            },
+            "last_name": {
+                "help_text": "Last name of the customer"
+            },
+            "email": {
+                "help_text": "Email of the customer"
+            },
+            "phone_number": {
+                "help_text": "Phone number of the customer"
+            },
+            "address": {
+                "help_text": "Address of the customer"
+            },
+            "date_of_birth": {
+                "help_text": "Date of birth of the customer (YYYY-MM-DD)"
+            },
+            "password": {
+                "help_text": "Password for the customer's account"
+            }
+        }
         read_only_fields = ["id"]
 
     def create(self, validated_data):
@@ -87,6 +111,32 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
             "salary",
             "password"
         ]
+        extra_kwargs = {
+            "first_name": {
+                "help_text": "First name of the employee"
+            },
+            "last_name": {
+                "help_text": "Last name of the employee"
+            },
+            "email": {
+                "help_text": "Email of the employee"
+            },
+            "phone_number": {
+                "help_text": "Phone number of the employee"
+            },
+            "role": {
+                "help_text": "Role of the employee"
+            },
+            "hire_date": {
+                "help_text": "Hire date of the employee"
+            },
+            "salary": {
+                "help_text": "Monthly salary of the employee"
+            },
+            "password": {
+                "help_text": "Password for the employee's account"
+            }
+        }
         read_only_fields = ["id"]
 
     def create(self, validated_data):
@@ -145,12 +195,7 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
             "salary",
             "created_at",
         ]
-        read_only_fields = [
-            "id",
-            "email",
-            "created_at",
-
-        ]
+        read_only_fields = fields
 
 class CustomerDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -203,4 +248,12 @@ class AdminEmployeeEmploymentStatusUpdateSerializer(serializers.ModelSerializer)
             "employment_status",
             "layoff_date"
         ]
+        extra_kwargs = {
+            "employment_status": {
+                "help_text": "Employment status of the employee (active or inactive)"
+            },
+            "layoff_date": {
+                "help_text": "Layoff date of the employee (YYYY-MM-DD)"
+            }
+        }
         read_only_fields = ["id"]

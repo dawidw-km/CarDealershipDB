@@ -45,7 +45,7 @@ urlpatterns = [
     path(
         "employee/list/",
         employee_list_view,
-        name="employee-list"
+        name="employee-list-template"
     ),
     path(
         "employee/update/<int:pk>/",
@@ -53,7 +53,7 @@ urlpatterns = [
         name="admin-employee-update-template"
     ),
     path(
-        "andmin/employees/<int:pk>/employment-status/update/",
+        "employee/admin/employees/<int:pk>/employment-status/update/",
         admin_employee_employment_status_update_view,
         name="admin-employee-employment-status-update-template"
     )

@@ -45,7 +45,7 @@ class PersonTemplateViewsTestCase(TestCase):
             phone_number="+48123456789",
             role=Employee.EmployeeRole.WORKER,
             salary=5000,
-            hire_date=date(2020, 1, 1)
+            hire_date=date(2020, 1, 1),
         )
     
     def create_employee_admin(self, email):
@@ -237,7 +237,7 @@ class PersonTemplateViewsTestCase(TestCase):
         )
 
         response = self.client.get(
-            reverse("employee-list")
+            reverse("employee-list-template")
         )
 
         self.assertEqual(response.status_code, 403)
@@ -252,7 +252,7 @@ class PersonTemplateViewsTestCase(TestCase):
         )
         
         response = self.client.get(
-            reverse("employee-list")
+            reverse("employee-list-template")
         )
 
         self.assertEqual(response.status_code, 200)
@@ -282,7 +282,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("employee-list")
+            reverse("employee-list-template")
         )
 
         worker.refresh_from_db()
@@ -341,7 +341,7 @@ class PersonTemplateViewsTestCase(TestCase):
         
         self.assertRedirects(
             response,
-            reverse("employee-list")
+            reverse("employee-list-template")
         )
 
         worker.refresh_from_db()
@@ -354,11 +354,8 @@ class PersonTemplateViewsTestCase(TestCase):
         worker1 = self.create_employee_worker("worker1@example.com")
         worker2 = self.create_employee_worker("worker2@example.com")
         
-        self.client.login(
-            username="worker1@example.com",
-            password="testpassword"
-        )
-
+        self.client.force_login(worker1.user)
+        
         response = self.client.post(
             reverse("admin-employee-employment-status-update-template", kwargs={"pk": worker2.pk}),
             {

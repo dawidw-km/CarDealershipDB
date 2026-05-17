@@ -7,6 +7,7 @@ from person.views.api_views import (
     CustomerRegistrationView,
     EmployeeRegistrationView,
     EmployeeListView,
+    EmployeeDetailView,
     CustomerDetailView,
     ChangePasswordView,
     AdminEmployeeUpdateView,
@@ -45,6 +46,11 @@ urlpatterns = [
         "change-password/",
         ChangePasswordView.as_view(),
         name="change-password"
+        ),
+    path(
+        "employee/me/",
+        EmployeeDetailView.as_view(),
+        name="employee-detail"
         ),
     path(
         "register/employee/",
