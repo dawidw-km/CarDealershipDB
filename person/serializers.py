@@ -16,18 +16,20 @@ class EmployeeTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         
         data = super().validate(attrs)
-
         user = self.user
 
-        if hasattr(user, "employee_profile"):
+        if not hasattr(user, "employee_profile"):
+            raise AuthenticationFailed(
+                "You must be an employee to sign in."
+            )
 
-            if (
-                user.employee_profile.employment_status
-                != Employee.EmploymentStatus.ACTIVE
-            ):
-                raise AuthenticationFailed(
-                    "Your employee account is inactive."
-                )
+        if (
+            user.employee_profile.employment_status
+            != Employee.EmploymentStatus.ACTIVE
+        ):
+            raise AuthenticationFailed(
+                "Your employee account is inactive."
+            )
             
         return data
 
@@ -178,7 +180,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
-            "created_at"
         ]
 
 class EmployeeDetailSerializer(serializers.ModelSerializer):
@@ -257,3 +258,27 @@ class AdminEmployeeEmploymentStatusUpdateSerializer(serializers.ModelSerializer)
             }
         }
         read_only_fields = ["id"]
+
+    def validate(self, attrs):
+        """
+        Ensures that the employment status and layoff date are consistent.
+        """
+        employment_status = attrs.get(
+            "employment_status",
+            getattr(self.instance, "employment_status", None)#obj, attribute, default
+        )
+        layoff_date = attrs.get(
+            "layoff_date",
+            getattr(self.instance, "layoff_date", None)
+        )
+
+        if (
+            employment_status == Employee.EmploymentStatus.INACTIVE and layoff_date is None
+        ):
+            raise serializers.ValidationError("Inactive employment status requires a layoff date.")
+        if (
+            employment_status == Employee.EmploymentStatus.ACTIVE and layoff_date is not None
+        ):
+            raise serializers.ValidationError("Active employment status does not require a layoff date.")
+
+        return attrs

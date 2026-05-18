@@ -8,7 +8,6 @@ from person.views.api_views import (
     EmployeeRegistrationView,
     EmployeeListView,
     EmployeeDetailView,
-    CustomerDetailView,
     ChangePasswordView,
     AdminEmployeeUpdateView,
     AdminEmployeeEmploymentStatusUpdateView,

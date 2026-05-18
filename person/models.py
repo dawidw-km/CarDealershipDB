@@ -108,3 +108,14 @@ class Employee(PersonBase):
         validators=[MinValueValidator(0)]
         )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        """
+        Ensures that the employment status and layoff date are consistent.
+        """
+        super().clean()
+
+        if self.employment_status == self.EmploymentStatus.INACTIVE and self.layoff_date is None:
+            raise ValidationError("Inactive employment status requires a layoff date.")
+        if self.employment_status == self.EmploymentStatus.ACTIVE and self.layoff_date is not None:
+            raise ValidationError("Active employment status does not require a layoff date.")

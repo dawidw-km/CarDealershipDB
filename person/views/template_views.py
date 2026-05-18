@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
 from ..models import Employee
 from ..serializers import (
     AdminEmployeeEmploymentStatusUpdateSerializer,
@@ -9,6 +8,7 @@ from ..serializers import (
     CustomerDetailSerializer,
     PasswordChangeSerializer,
     AdminEmployeeUpdateSerializer,
+    EmployeeRegistrationSerializer,
 )
 from person.decorators import (
     active_employee_required,
@@ -89,10 +89,16 @@ def password_change_view(request):
                     "person/password_change.html",
                     {'error': 'Wrong password.'}
                 )
-            
+ 
             user.set_password(serializer.validated_data['new_password'])
             user.save()
-            return redirect("customer-login-form")
+            update_session_auth_hash(request, user)
+            if hasattr(user, 'customer_profile'):
+                return redirect("customer-profile")
+            elif hasattr(user, 'employee_profile'):
+                return redirect("employee-profile")
+            else:
+                return redirect("customer-login-form")
         
         return render(
             request,
@@ -269,3 +275,36 @@ def admin_employee_employment_status_update_view(request, pk):
         "person/admin_employee_employment_status_update.html",
         {"employee": employee}
     )
+
+
+@login_required(login_url="customer-login-form")
+@admin_employee_required
+@active_employee_required
+def admin_employee_registration_view(request):
+    """
+    Render a form for admin employees to register new employees.
+    """
+    
+    if request.method == "POST":
+        serializer = EmployeeRegistrationSerializer(data=request.POST)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("employee-list-template")
+        
+        return render(
+            request,
+            "person/admin_employee_registration.html",
+            {"errors": serializer.errors}
+        )
+    return render(
+        request,
+        "person/admin_employee_registration.html"
+    )
+
+@login_required(login_url="customer-login-form")
+def logout_view(request):
+    """
+    Log out the authenticated user.
+    """
+    logout(request)
+    return redirect("customer-login-form")

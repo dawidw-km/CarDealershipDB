@@ -161,9 +161,10 @@ class PersonTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("customer-login-form")
+            reverse("customer-profile")
         )
-    
+        user = User.objects.get(email="jack.reacher@example.com")
+        self.assertTrue(user.check_password("newtestpassword"))
 
     def test_logged_user_cannot_change_password_with_wrong_old_password(self):
 
@@ -204,7 +205,7 @@ class PersonTemplateViewsTestCase(TestCase):
     
 
     def test_employee_can_access_employee_profile(self):
-        employee = self.create_employee_worker("jack.reacher@example.com")
+        self.create_employee_worker("jack.reacher@example.com")
 
         self.client.login(
             username="jack.reacher@example.com",
@@ -244,7 +245,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
     
     def test_admin_employee_can_access_employee_list(self):
-        admin = self.create_employee_admin("jack.reacher@example.com")
+        self.create_employee_admin("jack.reacher@example.com")
 
         self.client.login(
             username="jack.reacher@example.com",
@@ -259,7 +260,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
     
     def test_admin_employee_can_update_employee_profile(self):
-        admin = self.create_employee_admin("jack.reacher@example.com")
+        self.create_employee_admin("jack.reacher@example.com")
 
         worker = self.create_employee_worker("worker@example.com")
 
@@ -276,7 +277,7 @@ class PersonTemplateViewsTestCase(TestCase):
                 "phone_number": "+48765432109",
                 "role": Employee.EmployeeRole.WORKER,
                 "salary": 5000,
-                "hire_date": "2020-01-01"
+                "hire_date": date(2020, 1, 1)
             }
         )
 
@@ -292,7 +293,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
 
     def test_not_admin_employee_cannot_update_employee_profile(self):
-        worker1 = self.create_employee_worker("worker1@example.com")
+        self.create_employee_worker("worker1@example.com")
         worker2 = self.create_employee_worker("worker2@example.com")
 
         self.client.login(
@@ -308,7 +309,7 @@ class PersonTemplateViewsTestCase(TestCase):
                 "phone_number": "+48765432109",
                 "role": Employee.EmployeeRole.WORKER,
                 "salary": 5000,
-                "hire_date": "2020-01-01"
+                "hire_date": date(2020, 1, 1)
             }
         )
 
@@ -322,7 +323,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
     
     def test_admin_employee_can_update_employee_employment_status(self):
-        admin = self.create_employee_admin("jack.reacher@example.com")
+        self.create_employee_admin("jack.reacher@example.com")
 
         worker = self.create_employee_worker("worker1@example.com")
 
@@ -335,7 +336,7 @@ class PersonTemplateViewsTestCase(TestCase):
             reverse("admin-employee-employment-status-update-template", kwargs={"pk": worker.pk}),
             {
                 "employment_status": Employee.EmploymentStatus.INACTIVE,
-                "layoff_date": "2024-01-01"
+                "layoff_date": date(2024, 1, 1)
             }
         )
         
@@ -360,7 +361,7 @@ class PersonTemplateViewsTestCase(TestCase):
             reverse("admin-employee-employment-status-update-template", kwargs={"pk": worker2.pk}),
             {
                 "employment_status": Employee.EmploymentStatus.INACTIVE,
-                "layoff_date": "2024-01-01"
+                "layoff_date": date(2024, 1, 1)
             }
         )
 
@@ -369,3 +370,123 @@ class PersonTemplateViewsTestCase(TestCase):
         worker2.refresh_from_db()
 
         self.assertEqual(worker2.employment_status, Employee.EmploymentStatus.ACTIVE)
+
+    
+    def test_admin_employee_can_register_new_employee(self):
+        self.create_employee_admin("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+        
+        response = self.client.post(
+            reverse("admin-employee-registration-template"),
+            {
+                "first_name": "Jayce",
+                "last_name": "Arcane",
+                "email": "jayce123.arcane@example.com",
+                "phone_number": "+48765432109",
+                "role": Employee.EmployeeRole.WORKER,
+                "salary": 5000,
+                "hire_date": date(2020, 1, 1),
+                "password": "testpassword"
+            }
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("employee-list-template")
+        )
+
+        self.assertTrue(
+            Employee.objects.filter(
+                email="jayce123.arcane@example.com"
+            ).exists()
+        )
+
+
+    def test_customer_cannot_register_new_employee(self):
+        self.create_customer("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+        
+        response = self.client.post(
+            reverse("admin-employee-registration-template"),
+            {
+                "first_name": "Jayce",
+                "last_name": "Arcane",
+                "email": "jayce123.arcane@example.com",
+                "phone_number": "+48765432109",
+                "role": Employee.EmployeeRole.WORKER,
+                "salary": 5000,
+                "hire_date": date(2020, 1, 1),
+                "password": "testpassword"
+            }
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        self.assertFalse(
+            Employee.objects.filter(
+                email="jayce123.arcane@example.com"
+            ).exists()
+        )
+
+     
+    def test_not_admin_employee_cannot_register_new_employee(self):
+        worker = self.create_employee_worker("worker1@example.com")
+
+        self.client.force_login(worker.user)
+
+        response = self.client.post(
+            reverse("admin-employee-registration-template"),
+            {
+                "first_name": "Jayce",
+                "last_name": "Arcane",
+                "email": "jayce123.arcane@example.com",
+                "phone_number": "+48765432109",
+                "role": Employee.EmployeeRole.WORKER,
+                "salary": 5000,
+                "hire_date": date(2020, 1, 1),
+                "password": "testpassword"
+            }
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        self.assertFalse(
+            Employee.objects.filter(
+                email="jayce123.arcane@example.com"
+            ).exists()
+        )
+
+
+    def test_anonymous_user_cannot_access_logout_view(self):
+        response = self.client.get(reverse("logout"))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('customer-login-form')}?next={reverse('logout')}"
+        )
+
+
+    def test_authenticated_user_can_logout(self):
+        self.create_customer("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.post(
+            reverse("logout"),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("customer-login-form")
+        )

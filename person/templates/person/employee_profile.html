@@ -30,4 +30,8 @@
 </div>
 
 <a href="{% url 'user-change-password' %}"><button>Change Password</button></a>
-<a href="{% url 'employee-list' %}"><button>Employee List</button></a>
+<a href="{% url 'logout' %}"><button>Logout</button></a>
+{% if request.user.employee_profile.role == 'admin' %}
+    <a href="{% url 'admin-employee-registration-template' %}"><button>Register Employee</button></a>
+    <a href="{% url 'employee-list-template' %}"><button>Employee List</button></a>
+{% endif %}

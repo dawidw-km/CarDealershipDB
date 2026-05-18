@@ -17,35 +17,65 @@ class CustomerTestCase(TestCase):
             password='testpassword'
         )
     
-    def setUp(self):
 
-        self.user = self.create_user("testuser@gmail.com")
+    def create_customer(self, email):
+        user = self.create_user(email)
 
-        self.customer_1=Customer(
-            user=self.user,
-            first_name='Dawid',
-            last_name='Niekonieczny',
-            email='testuser@gmail.com',
-            phone_number='535327259',
-            address='Moczarów 13',
-            date_of_birth=date(2000, 5, 10)
+        return Customer.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            address="Warszawska 12",
+            date_of_birth=date(1990, 1, 1)
         )
+
+    def create_employee(self, email):
+        user = self.create_user(email)
+
+        return Employee.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+            employment_status=Employee.EmploymentStatus.ACTIVE
+        )
+
+
+    def create_admin_employee(self, email):
+        user = self.create_user(email)
+
+        return Employee.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.ADMIN,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+            employment_status=Employee.EmploymentStatus.ACTIVE
+        )
+
+
+    # Customer tests
+
+    def test_customer_creation_is_valid(self):
+
+        self.customer_1 = self.create_customer("testuser1@gmail.com")
 
         self.customer_1.full_clean()
 
     def test_first_name_cannot_contain_special_characters(self):
 
-        self.user = self.create_user("testuser1@gmail.com")
+        self.customer_2 = self.create_customer("testuser2@gmail.com")
 
-        self.customer_2=Customer(
-            user=self.user,
-            first_name='Dawid!',
-            last_name='Niekonieczny',
-            email='test1@gmail.com',
-            phone_number='535497259',
-            address='Moczarów 13',
-            date_of_birth=date(2000, 5, 10)
-        )
+        self.customer_2.first_name = "Dawid!"
 
         with self.assertRaises(ValidationError) as error:
             self.customer_2.full_clean()
@@ -55,129 +85,280 @@ class CustomerTestCase(TestCase):
             "Name can contain only letters."
         )
 
-    def test_invalid_email(self):
 
-        self.user = self.create_user("testuser2@gmail.com")
+    def test_last_name_cannot_contain_special_characters(self):
 
-        self.customer_3=Customer(
-            user=self.user,
-            first_name='Robert',
-            last_name='Janczarski',
-            email='wrong-email',
-            phone_number='555555444',
-            address='Szczecin ul.Górska 12',
-            date_of_birth=date(1980, 10, 4)
-        )
+        self.customer_3 = self.create_customer("testuser3@gmail.com")
+        self.customer_3.last_name = "Reacher!"
 
         with self.assertRaises(ValidationError):
             self.customer_3.full_clean()
 
 
-    def test_duplicated_email(self):
+    def test_email_is_required(self):
 
-        self.user = self.create_user("testuser3@gmail.com")
+        self.customer_4 = self.create_customer("testuser4@gmail.com")
+        self.customer_4.email = None
 
-        self.customer_4=Customer.objects.create(
-            user=self.user,
-            first_name='Mike',
-            last_name='Spayson',
-            email='mikespayson@gmail.com',
-            phone_number='645432675',
-            address='Wrocław ul.Grabicka 13',
-            date_of_birth=date(2001, 2, 3)
-        )
+        with self.assertRaises(ValidationError):
+            self.customer_4.full_clean()
 
-        self.user2 = self.create_user("testuser4@gmail.com")
 
-        self.customer_5=Customer(
-            user=self.user2,
-            first_name='Pike',
-            last_name='Spayson',
-            email='mikespayson@gmail.com',
-            phone_number='645432625',
-            address='Wrocław ul.Grabicka 13',
-            date_of_birth=date(2001, 3, 3)
-        )
+    def test_invalid_email(self):
+
+        self.customer_5 = self.create_customer("testuser3@gmail.com")
+
+        self.customer_5.email = "wrong-email"
 
         with self.assertRaises(ValidationError):
             self.customer_5.full_clean()
 
-    def test_phone_number_is_required(self):
 
-        self.user = self.create_user("testuser5@gmail.com")
+    def test_address_is_required(self):
 
-        self.customer_6=Customer(
-            user=self.user,
-            first_name='Michał',
-            last_name='Woźniak',
-            email='michalwolzniak12@gmail.com',
-            address="Bydgoszcz os.1000lecia 12",
-            date_of_birth=date(1999, 10, 10)
-        )
+        self.customer_6 = self.create_customer("testuser6@gmail.com")
+        self.customer_6.address = None
 
         with self.assertRaises(ValidationError):
             self.customer_6.full_clean()
 
     
-    def test_birth_date_cannot_be_in_future(self):
+    def test_birth_date_is_required(self):
 
-        self.user = self.create_user("testuser6@gmail.com")
+        self.customer_7 = self.create_customer("testuser7@gmail.com")
+        self.customer_7.date_of_birth = None
 
-        self.customer_7=Customer(
-            user=self.user,
-            first_name='Jan',
-            last_name='Nowak', 
-            email='jan.nowak@gmail.com',
-            phone_number='535397257',
-            address='Warszawa ul. Terasowa 12',
-            date_of_birth=date(2100, 1, 1)
-        )
-
-        with self.assertRaises(ValidationError) as error:
+        with self.assertRaises(ValidationError):
             self.customer_7.full_clean()
 
-        self.assertEqual(
-            error.exception.message_dict["date_of_birth"][0],
-            "Date cannot be in the future."
-        )
 
-    def test_customer_must_be_adult(self):
+    def test_phone_number_wrong_region(self):
 
-        self.user = self.create_user("testuser7@gmail.com")
-
-        self.customer_8=Customer(
-            user=self.user,
-            first_name='Jan',
-            last_name='Nowak',
-            email='jan.nowak2@gmail.com',
-            phone_number='512397259',
-            address='Warszawa ul. Terasowa 12',
-            date_of_birth=date(date.today().year - 17, 1, 1)
-        )
-
-        with self.assertRaises(ValidationError) as error:
-            self.customer_8.full_clean()
-
-        self.assertEqual(
-            error.exception.message_dict["date_of_birth"][0],
-            "User has to be at least 18 years old."
-        )
-    
-    
-    def test_address_too_short(self):
-
-        self.user = self.create_user("testuser8@gmail.com")
-
-        self.customer_9=Customer(
-            user=self.user,
-            first_name='Jan',
-            last_name='Kowalski',
-            email='janek.kowalski@gmail.com',
-            phone_number='512512512',
-            address='Short',
-            date_of_birth=date(2000, 10, 10)
-        )
+        self.customer_9 = self.create_customer("testuser9@gmail.com")
+        self.customer_9.phone_number = "+47123456789"
 
         with self.assertRaises(ValidationError):
             self.customer_9.full_clean()
 
+
+    def test_duplicated_email(self):
+
+        self.create_customer("testuser4@gmail.com")
+
+        duplicated_customer = self.create_customer("another@gmail.com")
+        duplicated_customer.email = "testuser4@gmail.com"
+
+        with self.assertRaises(ValidationError):
+            duplicated_customer.full_clean()
+
+
+    def test_phone_number_is_required(self):
+
+        self.customer_10 = self.create_customer("testuser5@gmail.com")
+        self.customer_10.phone_number = None
+
+        with self.assertRaises(ValidationError):
+            self.customer_10.full_clean()
+
+
+    def test_birth_date_cannot_be_in_future(self):
+
+        self.customer_11 = self.create_customer("testuser6@gmail.com")
+        self.customer_11.date_of_birth = date(2100, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            self.customer_11.full_clean()
+
+
+    def test_customer_must_be_adult(self):
+
+        self.customer_12 = self.create_customer("testuser7@gmail.com")
+        self.customer_12.date_of_birth = date(date.today().year - 17, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            self.customer_12.full_clean()
+    
+
+    def test_address_too_short(self):
+
+        self.customer_13 = self.create_customer("testuser8@gmail.com")
+        self.customer_13.address = "Short"
+
+        with self.assertRaises(ValidationError):
+            self.customer_13.full_clean()
+
+    # Employee tests
+    
+    def test_employee_creation(self):
+
+        self.employee_1 = self.create_employee("testemployee1@gmail.com")
+        self.employee_1.full_clean()
+
+        self.assertEqual(self.employee_1.first_name, "Jack")
+        self.assertEqual(self.employee_1.last_name, "Reacher")
+        self.assertEqual(self.employee_1.email, "testemployee1@gmail.com")
+        self.assertEqual(self.employee_1.phone_number, "+48123456789")
+        self.assertEqual(self.employee_1.role, Employee.EmployeeRole.WORKER)
+        self.assertEqual(self.employee_1.salary, 5000)
+        self.assertEqual(self.employee_1.hire_date, date(2020, 1, 1))
+        self.assertEqual(self.employee_1.employment_status, Employee.EmploymentStatus.ACTIVE)
+
+    def test_employee_creation_with_invalid_role(self):
+
+        self.employee_2 = self.create_employee("testemployee2@gmail.com")
+        self.employee_2.role = "invalid"
+
+        with self.assertRaises(ValidationError):
+            self.employee_2.full_clean()
+
+    def test_employee_creation_with_invalid_salary_negative(self):
+
+        self.employee_3 = self.create_employee("testemployee3@gmail.com")
+        self.employee_3.salary = -1000
+
+        with self.assertRaises(ValidationError):
+            self.employee_3.full_clean()
+
+    def test_employee_creation_with_invalid_employment_status(self):
+
+        self.employee_5 = self.create_employee("testemployee5@gmail.com")
+        self.employee_5.employment_status = "invalid"
+
+        with self.assertRaises(ValidationError):
+            self.employee_5.full_clean()
+
+    def test_admin_employee_creation(self):
+
+        self.admin_employee_1 = self.create_admin_employee("testadminemployee1@gmail.com")
+        self.admin_employee_1.full_clean()
+
+        self.assertEqual(self.admin_employee_1.first_name, "Jack")
+        self.assertEqual(self.admin_employee_1.last_name, "Reacher")
+        self.assertEqual(self.admin_employee_1.email, "testadminemployee1@gmail.com")
+        self.assertEqual(self.admin_employee_1.phone_number, "+48123456789")
+        self.assertEqual(self.admin_employee_1.role, Employee.EmployeeRole.ADMIN)
+        self.assertEqual(self.admin_employee_1.salary, 5000)
+        self.assertEqual(self.admin_employee_1.hire_date, date(2020, 1, 1))
+
+    def test_salary_is_required(self):
+
+        self.employee_6 = self.create_employee("testemployee6@gmail.com")
+        self.employee_6.salary = None
+
+        with self.assertRaises(ValidationError):
+            self.employee_6.full_clean()
+
+    def test_hire_date_is_required(self):
+
+        self.employee_7 = self.create_employee("testemployee7@gmail.com")
+        self.employee_7.hire_date = None
+
+        with self.assertRaises(ValidationError):
+            self.employee_7.full_clean()
+
+    def test_hire_date_cannot_be_in_future(self):
+
+        self.employee_8 = self.create_employee("testemployee8@gmail.com")
+        self.employee_8.hire_date = date(2100, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            self.employee_8.full_clean()
+
+    def test_employment_status_is_required(self):
+
+        self.employee_9 = self.create_employee("testemployee9@gmail.com")
+        self.employee_9.employment_status = None
+
+        with self.assertRaises(ValidationError):
+            self.employee_9.full_clean()
+
+    def test_layoff_and_active_employment_status_cannot_be_set_together(self):
+
+        self.employee_10 = self.create_employee("testemployee10@gmail.com")
+        self.employee_10.employment_status = Employee.EmploymentStatus.ACTIVE
+        self.employee_10.layoff_date = date(2024, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            self.employee_10.full_clean()
+
+    def test_no_layoff_and_inactive_employment_status_cannot_be_set_together(self):
+
+        self.employee_11 = self.create_employee("testemployee11@gmail.com")
+        self.employee_11.employment_status = Employee.EmploymentStatus.INACTIVE
+        self.employee_11.layoff_date = None
+
+        with self.assertRaises(ValidationError):
+            self.employee_11.full_clean()
+
+
+    def test_inactive_employee_with_layoff_date_is_valid(self):
+
+        self.employee_12 = self.create_employee("testemployee12@gmail.com")
+        self.employee_12.employment_status = Employee.EmploymentStatus.INACTIVE
+        self.employee_12.layoff_date = date(2024, 1, 1)
+
+        self.employee_12.full_clean()
+
+        self.assertEqual(self.employee_12.employment_status, Employee.EmploymentStatus.INACTIVE)
+        self.assertEqual(self.employee_12.layoff_date, date(2024, 1, 1))
+
+    
+    def test_active_employee_without_layoff_date_is_valid(self):
+
+        self.employee_13 = self.create_employee("testemployee13@gmail.com")
+        self.employee_13.employment_status = Employee.EmploymentStatus.ACTIVE
+        self.employee_13.layoff_date = None
+
+        self.employee_13.full_clean()
+
+        self.assertEqual(self.employee_13.employment_status, Employee.EmploymentStatus.ACTIVE)
+        self.assertEqual(self.employee_13.layoff_date, None)
+        
+    def test_layoff_date_cannot_be_in_future(self):
+
+        self.employee_14 = self.create_employee("testemployee14@gmail.com")
+        self.employee_14.employment_status = Employee.EmploymentStatus.INACTIVE
+        self.employee_14.layoff_date = date(2100, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            self.employee_14.full_clean()
+
+
+    def test_default_role_is_worker(self):
+
+        email = "testemployee16@gmail.com"
+        user = self.create_user(email)
+
+        employee = Employee.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+        )
+
+        employee.full_clean()
+
+        self.assertEqual(employee.role, Employee.EmployeeRole.WORKER)
+
+
+    def test_default_employment_status_is_active(self):
+        email = "testemployee16@gmail.com"
+        user = self.create_user(email)
+
+        employee = Employee.objects.create(
+            user=user,
+            first_name="Jack",
+            last_name="Reacher",
+            email=email,
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+        )
+
+        employee.full_clean()
+
+        self.assertEqual(employee.employment_status, Employee.EmploymentStatus.ACTIVE)

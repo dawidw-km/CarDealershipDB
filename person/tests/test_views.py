@@ -430,3 +430,96 @@ class PersonViewsTestCase(APITestCase):
             reverse("employee-list")
             )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    
+    def test_customer_cannot_sign_in_with_employee_token_endpoint(self):
+        customer = self.create_customer("customer@example.com")
+
+        response = self.client.post(
+            reverse("employee-token-obtain-pair"),
+            {
+                "username": "customer@example.com",
+                "password": "testpass123",
+            },
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    
+    def test_admin_employee_cannot_change_employment_status_to_inactive_without_layoff_date(self):
+        admin = self.create_employee_admin("admin@example.com")
+        employee = self.create_employee_worker("worker@example.com")
+
+        self.client.force_authenticate(user=admin.user)
+
+        employee_id = employee.id
+
+        data = {
+            "employment_status": Employee.EmploymentStatus.INACTIVE,
+            "layoff_date": None,
+        }
+
+        response = self.client.patch(
+            reverse("admin-employee-employment-status-update", args=[employee_id]),
+            data,
+            format="json"
+        )
+
+        employee.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["non_field_errors"][0], "Inactive employment status requires a layoff date.")
+        self.assertIsNone(employee.layoff_date)
+        self.assertEqual(employee.employment_status, Employee.EmploymentStatus.ACTIVE)
+
+    
+    def test_admin_employee_cannot_change_employment_status_to_active_with_layoff_date(self):
+
+        admin = self.create_employee_admin("admin@example.com")
+        employee = self.create_employee_worker("worker@example.com")
+
+        self.client.force_authenticate(user=admin.user)
+
+        employee_id = employee.id
+
+        data = {
+            "employment_status": Employee.EmploymentStatus.ACTIVE,
+            "layoff_date": "2024-01-01",
+        }
+        
+        response = self.client.patch(
+            reverse("admin-employee-employment-status-update", args=[employee_id]),
+            data,
+            format="json"
+        )
+
+        employee.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["non_field_errors"][0], "Active employment status does not require a layoff date.")
+        self.assertIsNone(employee.layoff_date)
+        self.assertEqual(employee.employment_status, Employee.EmploymentStatus.ACTIVE)
+
+
+    def test_employee_active_permission(self):
+        employee = self.create_employee_worker("employee@example.com")
+        employee.employment_status = Employee.EmploymentStatus.ACTIVE
+        employee.save()
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("employee-detail"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_employee_inactive_permission(self):
+        employee = self.create_employee_worker("employee@example.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.save()
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("employee-detail"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

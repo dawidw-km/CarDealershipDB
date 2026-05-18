@@ -8,7 +8,9 @@ from person.views.template_views import (
     password_change_view,
     employee_profile_view,
     employee_list_view,
-    admin_employee_update_view
+    admin_employee_update_view,
+    admin_employee_registration_view,
+    logout_view
 )
 
 urlpatterns = [
@@ -56,5 +58,15 @@ urlpatterns = [
         "employee/admin/employees/<int:pk>/employment-status/update/",
         admin_employee_employment_status_update_view,
         name="admin-employee-employment-status-update-template"
+    ),
+    path(
+        "employee/admin/employees/register/",
+        admin_employee_registration_view,
+        name="admin-employee-registration-template"
+    ),
+    path(
+        "logout/",
+        logout_view,
+        name="logout"
     )
 ]

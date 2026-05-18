@@ -14,9 +14,8 @@ from ..serializers import (
     AdminEmployeeEmploymentStatusUpdateSerializer,
     EmployeeTokenObtainPairSerializer
 )
-from ..permissions import IsEmployeeAdmin, IsAnonymous, IsEmployee
+from ..permissions import IsEmployeeAdmin, IsAnonymous, IsCustomer, IsEmployeeActive
 from rest_framework_simplejwt.views import TokenObtainPairView
-
 
 @extend_schema(tags=["Authentication"])
 class EmployeeLoginView(TokenObtainPairView):
@@ -24,7 +23,6 @@ class EmployeeLoginView(TokenObtainPairView):
     Return JWT tokens only if user is allowed to sign in.
     """
     serializer_class = EmployeeTokenObtainPairSerializer
-
 
 @extend_schema(
     tags=["Customers"],
@@ -58,7 +56,7 @@ class CustomerDetailView(generics.RetrieveUpdateAPIView):
     Retrieve and update the authenticated customer's profile.
     """
     serializer_class = CustomerDetailSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomer]
 
     def get_object(self):
         return self.request.user.customer_profile
@@ -123,7 +121,7 @@ class EmployeeRegistrationView(generics.CreateAPIView):
     """
     queryset = Employee.objects.all()
     serializer_class = EmployeeRegistrationSerializer
-    permission_classes = [IsEmployeeAdmin]
+    permission_classes = [IsEmployeeAdmin, IsAuthenticated]
 
 
 @extend_schema(tags=["Employees"])
@@ -133,7 +131,7 @@ class EmployeeDetailView(generics.RetrieveAPIView):
     """
     queryset = Employee.objects.all()
     serializer_class = EmployeeDetailSerializer
-    permission_classes = [IsAuthenticated, IsEmployee]
+    permission_classes = [IsEmployeeActive, IsAuthenticated]
 
     def get_object(self):
         return self.request.user.employee_profile
@@ -145,7 +143,7 @@ class EmployeeListView(generics.ListAPIView):
     """
     queryset = Employee.objects.all().order_by("id")
     serializer_class = EmployeeSerializer
-    permission_classes = [IsEmployeeAdmin]
+    permission_classes = [IsEmployeeAdmin, IsAuthenticated]
 
 
 @extend_schema(tags=["Employees"])
@@ -155,7 +153,7 @@ class AdminEmployeeUpdateView(generics.UpdateAPIView):
     """
     queryset = Employee.objects.all()
     serializer_class = AdminEmployeeUpdateSerializer
-    permission_classes = [IsEmployeeAdmin]
+    permission_classes = [IsEmployeeAdmin, IsAuthenticated]
 
 
 @extend_schema(tags=["Employees"])
@@ -165,4 +163,4 @@ class AdminEmployeeEmploymentStatusUpdateView(generics.UpdateAPIView):
     """
     queryset = Employee.objects.all()
     serializer_class = AdminEmployeeEmploymentStatusUpdateSerializer
-    permission_classes = [IsEmployeeAdmin]
+    permission_classes = [IsEmployeeAdmin, IsAuthenticated]

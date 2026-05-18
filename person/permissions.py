@@ -1,12 +1,20 @@
 from rest_framework.permissions import BasePermission
+from .models import Employee
 
-
-class IsEmployee(BasePermission):
+class IsCustomer(BasePermission):
     """
-    Ensures that a user is an employee
+    Ensures that a user is a customer
     """
     def has_permission(self, request, view):
-        return hasattr(request.user, 'employee_profile')
+        return hasattr(request.user, 'customer_profile')
+
+
+class IsEmployeeActive(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            hasattr(request.user, "employee_profile")
+            and request.user.employee_profile.employment_status == Employee.EmploymentStatus.ACTIVE
+        )
 
 
 class IsEmployeeAdmin(BasePermission):
@@ -23,6 +31,9 @@ class IsEmployeeAdmin(BasePermission):
             return True
 
         if not hasattr(request.user, 'employee_profile'):
+            return False
+        
+        if request.user.employee_profile.employment_status != Employee.EmploymentStatus.ACTIVE:
             return False
 
         return request.user.employee_profile.role == 'admin'
