@@ -30,14 +30,20 @@ def login_view(request):
         )
 
         if user is not None:
-            login(request, user)
-            
-            if hasattr(user, 'customer_profile'):
-                return redirect("customer-profile")
-            
             if hasattr(user, 'employee_profile'):
+                if user.employee_profile.employment_status == Employee.EmploymentStatus.INACTIVE:
+                    return render(
+                        request,
+                        "person/login.html",
+                        {"error": "Your employee account is inactive."}
+                    ) 
+                login(request, user) 
                 return redirect("employee-profile")
-        
+                
+            elif hasattr(user, 'customer_profile'):
+                login(request, user)
+                return redirect("customer-profile")
+
         return render(
             request,
             "person/login.html",
@@ -79,7 +85,10 @@ def password_change_view(request):
     Render a form to change the authenticated user's password.
     """
     if request.method == 'POST':
-        serializer = PasswordChangeSerializer(data=request.POST)
+        serializer = PasswordChangeSerializer(
+            data=request.POST,
+            context={"request": request}
+        )
         if serializer.is_valid():
             user = request.user
 

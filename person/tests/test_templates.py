@@ -182,8 +182,8 @@ class PersonTemplateViewsTestCase(TestCase):
                 "new_password": "newtestpassword",
             }
         )
-
-        self.assertEqual(response.context["error"], "Wrong password.")
+        print(response.context)
+        self.assertIn("old_password", response.context["errors"])
 
 
     def test_not_logged_user_cannot_change_password(self):

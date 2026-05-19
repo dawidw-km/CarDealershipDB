@@ -16,6 +16,7 @@ def year_validator(year):
     if year > current_year:
         raise ValidationError("Date of production cannot be in the future.")
 
+
 class VehicleType(models.TextChoices):
     SEDAN = "sedan", "Sedan"
     HATCHBACK = "hatchback", "Hatchback"
@@ -27,15 +28,45 @@ class VehicleType(models.TextChoices):
     PICKUP = "pickup", "Pickup"
 
 
+class VehicleCondition(models.TextChoices):
+    NEW = "new", "New"
+    USED = "used", "Used"
+    FOR_PARTS = "for_parts", "For parts"
+
+
+class AccidentStatus(models.TextChoices):
+    ACCIDENT_FREE = "accident_free", "Accident free"
+    AFTER_IMPACT = "after_impact", "After impact"
+    ACCIDENT_HISTORY = "accident_history", "Accident history"
+    DAMAGED = "damaged", "Damaged"
+
+
 class Status(models.TextChoices):
     AVAILABLE = "available", "Available"
     RESERVED = "reserved", "Reserved"
     SOLD = "sold", "Sold"
 
+
 class ModerationStatus(models.TextChoices):
     PENDING = "pending", "Pending"
     APPROVED = "approved", "Approved"
     REJECTED = "rejected", "Rejected"
+
+
+class FuelType(models.TextChoices):
+    GASOLINE = "gasoline", "Gasoline"
+    DIESEL = "diesel", "Diesel"
+    ELECTRIC = "electric", "Electric"
+    HYBRID = "hybrid", "Hybrid"
+    PLUG_IN_HYBRID = "plug_in_hybrid", "Plug-in hybrid"
+    OTHER = "other", "Other"
+
+
+class Transmission(models.TextChoices):
+    MANUAL = "manual", "Manual"
+    AUTOMATIC = "automatic", "Automatic"
+    SEMI_AUTOMATIC = "semi_automatic", "Semi-automatic"
+
 
 class Car(models.Model):
 
@@ -72,13 +103,31 @@ class Car(models.Model):
             validators=[MaxValueValidator(2000000)]
             )
 
-    purchase_price = models.DecimalField(
-            max_digits=10,
-            decimal_places=2,
-            null=True,
-            blank=True
-            )
-    selling_price = models.DecimalField(
+    fuel_type = models.CharField(
+        max_length=20,
+        choices=FuelType.choices, #type: ignore
+        default=FuelType.GASOLINE,
+    )
+
+    transmission = models.CharField(
+        max_length=20,
+        choices=Transmission.choices, #type: ignore
+        default=Transmission.MANUAL,
+    )
+
+    vehicle_condition = models.CharField(
+        max_length=20,
+        choices=VehicleCondition.choices, #type: ignore
+        default=VehicleCondition.USED,
+    )
+
+    accident_status = models.CharField(
+        max_length=20,
+        choices=AccidentStatus.choices, #type: ignore
+        default=AccidentStatus.ACCIDENT_FREE,
+    )
+
+    listing_price = models.DecimalField(
             max_digits=10,
             decimal_places=2,
             null=True,

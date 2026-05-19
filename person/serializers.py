@@ -1,5 +1,7 @@
 from datetime import date
+from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password as django_validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
@@ -7,6 +9,13 @@ from .models import Employee, Customer
 
 User = get_user_model()
 
+def validate_unique_email(email):
+    """
+    Ensures that the email is not already in use.
+    """
+    if User.objects.filter(email=email).exists():
+        raise serializers.ValidationError("Email already in use.")
+    return email
 
 class EmployeeTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
@@ -77,7 +86,21 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         }
         read_only_fields = ["id"]
 
+
+    def validate_email(self, email):
+       validate_unique_email(email)
+       return email
+
+    def validate_password(self, password):
+            django_validate_password(password)
+            return password
+
+    @transaction.atomic
     def create(self, validated_data):
+        """
+        Create a new customer account and related customer profile.
+        """
+
         password = validated_data.pop('password')
         email = validated_data.get('email')
 
@@ -87,10 +110,12 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
             password=password
         )
 
-        customer = Customer.objects.create(
+        customer = Customer(
             user=user,
             **validated_data
         )
+        customer.full_clean()
+        customer.save()
 
         return customer
     
@@ -141,9 +166,23 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
         }
         read_only_fields = ["id"]
 
+
+    def validate_email(self, email):
+       validate_unique_email(email)
+       return email
+
+    def validate_password(self, password):
+        django_validate_password(password)
+        return password
+
+    @transaction.atomic
     def create(self, validated_data):
+        """
+        Create a new employee account and related employee profile.
+        """
         password = validated_data.pop('password')
         email = validated_data.get('email')
+
 
         user = User.objects.create_user(
             username=email,
@@ -151,16 +190,43 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
             password=password
         )
 
-        employee = Employee.objects.create(
+        employee = Employee(
             user=user,
             **validated_data
         )
+        employee.full_clean()
+        employee.save()
 
         return employee
     
 class PasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True, required=True)
     new_password = serializers.CharField(write_only=True, required=True, min_length=5)
+
+    def validate_new_password(self, new_password):
+        django_validate_password(new_password)
+        return new_password
+
+    def validate(self, attrs):
+        """
+        Ensures that the old password is correct.
+        """
+        old_password = attrs.get('old_password')
+        new_password = attrs.get('new_password')
+        user = self.context['request'].user
+
+        if not user.check_password(old_password):
+            raise serializers.ValidationError(
+                {"old_password": "Old password is incorrect."}
+                )
+
+        if old_password == new_password:
+            raise serializers.ValidationError(
+                {"new_password": "New password cannot be the same as the old password."}
+                )
+
+        return attrs
+
 
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -218,6 +284,18 @@ class CustomerDetailSerializer(serializers.ModelSerializer):
             "date_of_birth"
         ]
 
+    def update(self, instance, validated_data):
+        """
+        Update a customer profile and ensure that the user does not have an employee profile.
+        """
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.address = validated_data.get('address', instance.address)
+        instance.full_clean()
+        instance.save()
+        return instance
+
 class AdminEmployeeUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
@@ -237,6 +315,20 @@ class AdminEmployeeUpdateSerializer(serializers.ModelSerializer):
             "created_at",
             "email",
         ]
+
+    def update(self, instance, validated_data):
+        """
+        Update an employee profile and ensure that the user does not have a customer profile.
+        """
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.role = validated_data.get('role', instance.role)
+        instance.hire_date = validated_data.get('hire_date', instance.hire_date)
+        instance.salary = validated_data.get('salary', instance.salary)
+        instance.full_clean()
+        instance.save()
+        return instance
 
 class AdminEmployeeEmploymentStatusUpdateSerializer(serializers.ModelSerializer):
     """
@@ -259,26 +351,12 @@ class AdminEmployeeEmploymentStatusUpdateSerializer(serializers.ModelSerializer)
         }
         read_only_fields = ["id"]
 
-    def validate(self, attrs):
+    def update(self, instance, validated_data):
         """
-        Ensures that the employment status and layoff date are consistent.
+        Update employment status fields and run model validation before saving.
         """
-        employment_status = attrs.get(
-            "employment_status",
-            getattr(self.instance, "employment_status", None)#obj, attribute, default
-        )
-        layoff_date = attrs.get(
-            "layoff_date",
-            getattr(self.instance, "layoff_date", None)
-        )
-
-        if (
-            employment_status == Employee.EmploymentStatus.INACTIVE and layoff_date is None
-        ):
-            raise serializers.ValidationError("Inactive employment status requires a layoff date.")
-        if (
-            employment_status == Employee.EmploymentStatus.ACTIVE and layoff_date is not None
-        ):
-            raise serializers.ValidationError("Active employment status does not require a layoff date.")
-
-        return attrs
+        instance.employment_status = validated_data.get('employment_status', instance.employment_status)
+        instance.layoff_date = validated_data.get('layoff_date', instance.layoff_date)
+        instance.full_clean()
+        instance.save()
+        return instance
