@@ -362,3 +362,41 @@ class CustomerTestCase(TestCase):
         employee.full_clean()
 
         self.assertEqual(employee.employment_status, Employee.EmploymentStatus.ACTIVE)
+
+
+    def test_customer_cannot_be_created_if_user_has_employee_profile(self):
+
+        self.employee_1 = self.create_employee("testemployee1@gmail.com")
+
+        customer = Customer(
+            user=self.employee_1.user,
+            first_name="Jack",
+            last_name="Reacher",
+            email="testemployee1@gmail.com",
+            phone_number="+48123456789",
+            address="Warszawska 12",
+            date_of_birth=date(1990, 1, 1)
+        )
+
+        with self.assertRaises(ValidationError):
+            customer.full_clean()
+
+
+    def test_employee_cannot_be_created_if_user_has_customer_profile(self):
+
+        self.customer_1 = self.create_customer("testcustomer1@gmail.com")
+
+        employee = Employee(
+            user=self.customer_1.user,
+            first_name="Jack",
+            last_name="Reacher",
+            email="testcustomer1@gmail.com",
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+            employment_status=Employee.EmploymentStatus.ACTIVE
+        )
+
+        with self.assertRaises(ValidationError):
+            employee.full_clean()
