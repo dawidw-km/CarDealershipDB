@@ -1,4 +1,5 @@
 from datetime import date
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password as django_validate_password
@@ -114,7 +115,11 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
             user=user,
             **validated_data
         )
-        customer.full_clean()
+        try:
+            customer.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
         customer.save()
 
         return customer
@@ -194,7 +199,11 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
             user=user,
             **validated_data
         )
-        employee.full_clean()
+        try:
+            employee.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
         employee.save()
 
         return employee
@@ -292,7 +301,12 @@ class CustomerDetailSerializer(serializers.ModelSerializer):
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.address = validated_data.get('address', instance.address)
-        instance.full_clean()
+        
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
         instance.save()
         return instance
 
@@ -326,7 +340,12 @@ class AdminEmployeeUpdateSerializer(serializers.ModelSerializer):
         instance.role = validated_data.get('role', instance.role)
         instance.hire_date = validated_data.get('hire_date', instance.hire_date)
         instance.salary = validated_data.get('salary', instance.salary)
-        instance.full_clean()
+
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
         instance.save()
         return instance
 
@@ -357,6 +376,11 @@ class AdminEmployeeEmploymentStatusUpdateSerializer(serializers.ModelSerializer)
         """
         instance.employment_status = validated_data.get('employment_status', instance.employment_status)
         instance.layoff_date = validated_data.get('layoff_date', instance.layoff_date)
-        instance.full_clean()
+
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
         instance.save()
         return instance

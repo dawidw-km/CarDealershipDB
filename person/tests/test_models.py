@@ -7,7 +7,6 @@ from ..models import Customer, Employee
 User = get_user_model()
 
 
-
 class CustomerTestCase(TestCase):
 
     def create_user(self, email):

@@ -469,7 +469,7 @@ class PersonViewsTestCase(APITestCase):
         employee.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["non_field_errors"][0], "Inactive employment status requires a layoff date.")
+        self.assertEqual(response.data["__all__"][0], "Inactive employment status requires a layoff date.")
         self.assertIsNone(employee.layoff_date)
         self.assertEqual(employee.employment_status, Employee.EmploymentStatus.ACTIVE)
 
@@ -493,11 +493,11 @@ class PersonViewsTestCase(APITestCase):
             data,
             format="json"
         )
-
+        
         employee.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["non_field_errors"][0], "Active employment status does not require a layoff date.")
+        self.assertEqual(response.data["__all__"][0], "Active employment status does not require a layoff date.")
         self.assertIsNone(employee.layoff_date)
         self.assertEqual(employee.employment_status, Employee.EmploymentStatus.ACTIVE)
 

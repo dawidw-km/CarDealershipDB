@@ -72,14 +72,14 @@ class Car(models.Model):
 
     owner = models.ForeignKey(
         'person.Customer',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
+        null=False,
+        blank=False,
         related_name='cars'
     )
 
-    brand = models.CharField(max_length=40)
-    model = models.CharField(max_length=40)
+    brand = models.CharField(max_length=40, null=False, blank=False)
+    model = models.CharField(max_length=40, null=False, blank=False)
     color = models.CharField(
         max_length=40,
         null=True,
@@ -130,8 +130,8 @@ class Car(models.Model):
     listing_price = models.DecimalField(
             max_digits=10,
             decimal_places=2,
-            null=True,
-            blank=True
+            null=False,
+            blank=False
             )
 
     status = models.CharField(

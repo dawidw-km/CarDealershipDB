@@ -182,7 +182,7 @@ class PersonTemplateViewsTestCase(TestCase):
                 "new_password": "newtestpassword",
             }
         )
-        print(response.context)
+        
         self.assertIn("old_password", response.context["errors"])
 
 
@@ -490,3 +490,21 @@ class PersonTemplateViewsTestCase(TestCase):
             response,
             reverse("customer-login-form")
         )
+
+    
+    def test_inactive_employee_cannot_login(self):
+        employee = self.create_employee_worker("jack.reacher@example.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.layoff_date = date(2024, 1, 1)
+        employee.save()
+        response = self.client.post(
+            reverse("customer-login-form"),
+            {
+                "email": "jack.reacher@example.com",
+                "password": "testpassword"
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your employee account is inactive.")
+        self.assertTemplateUsed(response, "person/login.html")

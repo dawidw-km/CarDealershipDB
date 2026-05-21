@@ -1,5 +1,8 @@
 from django.test import TestCase
 from ..serializers import CustomerRegistrationSerializer, EmployeeRegistrationSerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class PersonRegistrationSerializerTestCase(TestCase):
 
@@ -38,6 +41,7 @@ class PersonRegistrationSerializerTestCase(TestCase):
 
         self.assertEqual(employee.user.email, "john.doe@example.com")
         self.assertEqual(employee.phone_number, "+48123456789")
+        self.assertTrue(employee.user.check_password("Piesek12345"))
         self.assertEqual(employee.role, "worker")
 
 
@@ -67,4 +71,5 @@ class PersonRegistrationSerializerTestCase(TestCase):
         })
 
         self.assertFalse(serializer_2.is_valid(), serializer_2.errors)
+        self.assertEqual(User.objects.filter(email="john.doe@example.com").count(), 1)
         self.assertIn("email", serializer_2.errors)
