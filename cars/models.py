@@ -163,3 +163,59 @@ class Car(models.Model):
 
     def __str__(self):
         return f"{self.brand} {self.model} ({self.year})"
+
+
+    def validate_new_vehicle(self):
+        """
+        Validates that a new vehicle is accident free and has mileage less than 100 km.
+        """
+        if (
+            self.vehicle_condition == VehicleCondition.NEW
+            and self.accident_status != AccidentStatus.ACCIDENT_FREE
+        ):
+            raise ValidationError(
+                "New vehicle must be accident free."
+                )
+
+        if (
+            self.vehicle_condition == VehicleCondition.NEW
+            and self.mileage > 100
+        ):
+            raise ValidationError(
+                "New vehicle cannot have mileage greater than 100 km"
+                )
+
+    def validate_sold_vehicle_rules(self):
+        """
+        Validates that a sold vehicle has a reviewer and a moderation status of approved.
+        """
+        if self.status != Status.SOLD:
+            return
+
+        if self.reviewer is None:
+            raise ValidationError(
+                "Sold vehicle must have a reviewer."
+                )
+
+        if self.moderation_status != ModerationStatus.APPROVED:
+            raise ValidationError(
+                "Sold vehicle must be approved."
+                )
+
+
+    def validate_vehicle_listing_price(self):
+        """
+        Validates that the listing price is greater than 0.
+        """
+        if self.listing_price <= 0:
+            raise ValidationError(
+                "Listing price must be greater than 0."
+                )
+
+    def clean(self):
+
+        super().clean()
+
+        self.validate_new_vehicle()
+        self.validate_sold_vehicle_rules()
+        self.validate_vehicle_listing_price()

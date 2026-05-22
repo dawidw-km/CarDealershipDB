@@ -68,15 +68,22 @@ class Customer(PersonBase):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-    def clean(self):
+    def validate_employee_profile(self):
         """
-        Ensures that the user does not have an employee profile.
+        Validates that the user does not have an employee profile.
         """
-        super().clean()
         if hasattr(self.user, 'employee_profile'):
             raise ValidationError(
                 "This user already has an employee profile."
             )
+    
+
+    def clean(self):
+       
+        super().clean()
+
+        self.validate_employee_profile()
+
 
 class Employee(PersonBase):
     
@@ -119,13 +126,11 @@ class Employee(PersonBase):
         )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def clean(self):
-        """
-        Ensures that the employment status and layoff date are consistent.
-        Ensures that the user does not have a customer profile.
-        """
-        super().clean()
 
+    def validate_employee_status(self):
+        """
+        Validates that the employment status and layoff date are consistent.
+        """
         if (
             self.employment_status == self.EmploymentStatus.INACTIVE
             and self.layoff_date is None
@@ -140,11 +145,24 @@ class Employee(PersonBase):
             raise ValidationError(
                 "Active employment status does not require a layoff date."
             )
+
+
+    def validate_customer_profile(self):
+        """
+        Validates that the user does not have a customer profile.
+        """
         if hasattr(self.user, 'customer_profile'):
             raise ValidationError(
                 "This user already has a customer profile."
             )
         
+
+    def clean(self):
+
+        super().clean()
+
+        self.validate_employee_status()
+        self.validate_customer_profile()
         
 
         

@@ -11,7 +11,7 @@ from ..models import (
     Status,
     ModerationStatus,
     )
-from person.models import Customer
+from person.models import Customer, Employee
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -37,6 +37,19 @@ class CarTestCase(TestCase):
             address="Warszawska 12",
             date_of_birth=date(1990, 1, 1)
         )
+    
+    def create_employee_worker(self, email):
+        user = self.create_user(email)
+        return Employee.objects.create(
+            user=user,
+            first_name="Adam",
+            last_name="Kowalski",
+            email=email,
+            phone_number="+48321321321",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1)
+        )
 
     def create_car(self):
 
@@ -53,7 +66,7 @@ class CarTestCase(TestCase):
             mileage=10000,
             fuel_type=FuelType.GASOLINE,
             transmission=Transmission.MANUAL,
-            vehicle_condition=VehicleCondition.NEW,
+            vehicle_condition=VehicleCondition.USED,
             accident_status=AccidentStatus.ACCIDENT_FREE,
             listing_price=10000,
             status=Status.AVAILABLE,
@@ -65,6 +78,7 @@ class CarTestCase(TestCase):
     
     def test_car_creation_is_valid(self):
         car = self.create_car()
+        car.mileage = 100
         car.full_clean()
         car.save()
         self.assertEqual(car.brand, "Toyota")
@@ -73,10 +87,10 @@ class CarTestCase(TestCase):
         self.assertEqual(car.vehicle_type, VehicleType.SUV)
         self.assertEqual(car.year, 2020)
         self.assertEqual(car.vin, "1HGCM82633A004352")
-        self.assertEqual(car.mileage, 10000)
+        self.assertEqual(car.mileage, 100)
         self.assertEqual(car.fuel_type, FuelType.GASOLINE)
         self.assertEqual(car.transmission, Transmission.MANUAL)
-        self.assertEqual(car.vehicle_condition, VehicleCondition.NEW)
+        self.assertEqual(car.vehicle_condition, VehicleCondition.USED)
         self.assertEqual(car.accident_status, AccidentStatus.ACCIDENT_FREE)
         self.assertEqual(car.listing_price, 10000)
         self.assertEqual(car.status, Status.AVAILABLE)
@@ -137,3 +151,60 @@ class CarTestCase(TestCase):
         car = self.create_car()
 
         self.assertEqual(str(car), "Toyota Corolla (2020)")
+
+    def test_new_vehicle_must_be_accident_free(self):
+        car = self.create_car()
+        car.vehicle_condition = VehicleCondition.NEW
+        car.accident_status = AccidentStatus.AFTER_IMPACT
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+    
+    def test_new_vehicle_cannot_have_mileage_greater_than_100(self):
+        car = self.create_car()
+        car.vehicle_condition = VehicleCondition.NEW
+        car.mileage = 101
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+    
+    def test_new_vehicle_with_valid_data_passes_validation(self):
+        car = self.create_car()
+
+        car.vehicle_condition = VehicleCondition.NEW
+        car.accident_status = AccidentStatus.ACCIDENT_FREE
+        car.mileage = 50
+
+        car.full_clean()
+
+    def test_sold_vehicle_must_have_reviewer(self):
+        car = self.create_car()
+        car.status = Status.SOLD
+        car.reviewer = None
+        car.moderation_status = ModerationStatus.APPROVED
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+
+    def test_sold_vehicle_must_be_approved(self):
+        car = self.create_car()
+        car.status = Status.SOLD
+        car.reviewer = self.create_employee_worker("testemployee1@gmail.com")
+        car.moderation_status = ModerationStatus.PENDING
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+    
+    def test_sold_vehicle_with_valid_data_passes_validation(self):
+        car = self.create_car()
+        car.status = Status.SOLD
+        car.reviewer = self.create_employee_worker("testemployee1@gmail.com")
+        car.moderation_status = ModerationStatus.APPROVED
+        car.full_clean()
+
+    def test_listing_price_must_be_greater_than_0(self):
+        car = self.create_car()
+        car.listing_price = 0
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+    
+    def test_listing_price_with_valid_data_passes_validation(self):
+        car = self.create_car()
+        car.listing_price = 10000
+        car.full_clean()
