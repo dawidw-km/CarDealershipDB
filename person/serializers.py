@@ -28,6 +28,9 @@ class EmployeeTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         user = self.user
 
+        if user.is_superuser:
+            return data
+
         if not hasattr(user, "employee_profile"):
             raise AuthenticationFailed(
                 "You must be an employee to sign in."
@@ -40,7 +43,6 @@ class EmployeeTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise AuthenticationFailed(
                 "Your employee account is inactive."
             )
-            
         return data
 
 

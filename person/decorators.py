@@ -8,6 +8,9 @@ def active_employee_required(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        
         if not request.user.is_authenticated:
             return HttpResponseForbidden("You must be logged in to access this page.")
         
@@ -29,6 +32,9 @@ def admin_employee_required(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        
         if not request.user.is_authenticated:
             return HttpResponseForbidden("You must be logged in to access this page.")
         

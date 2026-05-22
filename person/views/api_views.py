@@ -121,7 +121,7 @@ class EmployeeRegistrationView(generics.CreateAPIView):
     """
     queryset = Employee.objects.all()
     serializer_class = EmployeeRegistrationSerializer
-    permission_classes = [IsEmployeeAdmin, IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEmployeeAdmin]
 
 
 @extend_schema(tags=["Employees"])

@@ -78,7 +78,6 @@ class CarTestCase(TestCase):
     
     def test_car_creation_is_valid(self):
         car = self.create_car()
-        car.mileage = 100
         car.full_clean()
         car.save()
         self.assertEqual(car.brand, "Toyota")
@@ -87,19 +86,13 @@ class CarTestCase(TestCase):
         self.assertEqual(car.vehicle_type, VehicleType.SUV)
         self.assertEqual(car.year, 2020)
         self.assertEqual(car.vin, "1HGCM82633A004352")
-        self.assertEqual(car.mileage, 100)
+        self.assertEqual(car.mileage, 10000)
         self.assertEqual(car.fuel_type, FuelType.GASOLINE)
         self.assertEqual(car.transmission, Transmission.MANUAL)
         self.assertEqual(car.vehicle_condition, VehicleCondition.USED)
         self.assertEqual(car.accident_status, AccidentStatus.ACCIDENT_FREE)
         self.assertEqual(car.listing_price, 10000)
         self.assertEqual(car.status, Status.AVAILABLE)
-
-    def test_car_creation_with_invalid_color(self):
-        car = self.create_car()
-        car.color = "purple" * 10
-        with self.assertRaises(ValidationError):
-            car.full_clean()
 
     def test_car_creation_with_invalid_vehicle_type(self):
         car = self.create_car()

@@ -11,6 +11,9 @@ class IsCustomer(BasePermission):
 
 class IsEmployeeActive(BasePermission):
     def has_permission(self, request, view):
+        if request.user.is_superuser:
+            return True
+            
         return (
             hasattr(request.user, "employee_profile")
             and request.user.employee_profile.employment_status == Employee.EmploymentStatus.ACTIVE

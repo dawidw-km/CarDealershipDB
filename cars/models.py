@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date
 from django.db import models
-from django.core.validators import RegexValidator, MaxLengthValidator, MaxValueValidator
+from django.core.validators import RegexValidator, MaxLengthValidator, MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
 
 
@@ -9,11 +9,11 @@ vin_validator = RegexValidator(
         message='Invalid VIN format.'
         )
 
-def year_validator(year):
-    current_year = datetime.now().year
-    if year < 1886:
+def car_year_validator(value):
+    current_year = date.today().year
+    if value < 1886:
         raise ValidationError("Year of production cannot be earlier than 1886.")
-    if year > current_year:
+    if value > current_year:
         raise ValidationError("Date of production cannot be in the future.")
 
 
@@ -91,7 +91,7 @@ class Car(models.Model):
         blank=True
         )
     year = models.PositiveIntegerField(
-            validators=[year_validator]
+            validators=[car_year_validator]
             )
 
     vin = models.CharField(max_length=17,
@@ -131,7 +131,8 @@ class Car(models.Model):
             max_digits=10,
             decimal_places=2,
             null=False,
-            blank=False
+            blank=False,
+            validators=[MinValueValidator(1)]
             )
 
     status = models.CharField(
@@ -203,19 +204,9 @@ class Car(models.Model):
                 )
 
 
-    def validate_vehicle_listing_price(self):
-        """
-        Validates that the listing price is greater than 0.
-        """
-        if self.listing_price <= 0:
-            raise ValidationError(
-                "Listing price must be greater than 0."
-                )
-
     def clean(self):
 
         super().clean()
 
         self.validate_new_vehicle()
         self.validate_sold_vehicle_rules()
-        self.validate_vehicle_listing_price()

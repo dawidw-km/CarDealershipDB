@@ -30,6 +30,10 @@ def login_view(request):
         )
 
         if user is not None:
+            if user.is_superuser:
+                login(request, user)
+                return redirect("employee-profile")
+            
             if hasattr(user, 'employee_profile'):
                 if user.employee_profile.employment_status == Employee.EmploymentStatus.INACTIVE:
                     return render(
@@ -181,6 +185,13 @@ def employee_profile_view(request):
     Render a dashboard page for employees.
     """
 
+    if request.user.is_superuser:
+        return render(
+            request,
+            "person/employee_profile.html",
+            {"is_superuser": True}
+        )
+
     if not hasattr(request.user, 'employee_profile'):
         return redirect("customer-login-form")
 
@@ -201,6 +212,7 @@ def employee_list_view(request):
     """
     
     employees = Employee.objects.all()
+    
     return render(
         request,
         "person/employee_list.html",
