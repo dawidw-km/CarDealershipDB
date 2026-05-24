@@ -46,6 +46,22 @@ class EmployeeTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+class CustomerTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Ensures that inactive customer cannot log in.
+    """
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+
+        if not hasattr(user, "customer_profile"):
+            raise AuthenticationFailed(
+                "You must be a customer to sign in."
+            )
+
+        return data
+
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer for customer registration. Creates a new Django authentication user and related customer profile.

@@ -12,7 +12,8 @@ from ..serializers import (
     CustomerDetailSerializer,
     AdminEmployeeUpdateSerializer,
     AdminEmployeeEmploymentStatusUpdateSerializer,
-    EmployeeTokenObtainPairSerializer
+    EmployeeTokenObtainPairSerializer,
+    CustomerTokenObtainPairSerializer
 )
 from ..permissions import IsEmployeeAdmin, IsAnonymous, IsCustomer, IsEmployeeActive
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -23,6 +24,13 @@ class EmployeeLoginView(TokenObtainPairView):
     Return JWT tokens only if user is allowed to sign in.
     """
     serializer_class = EmployeeTokenObtainPairSerializer
+
+@extend_schema(tags=["Authentication"])
+class CustomerLoginView(TokenObtainPairView):
+    """
+    Return JWT tokens only if user is allowed to sign in.
+    """
+    serializer_class = CustomerTokenObtainPairSerializer
 
 @extend_schema(
     tags=["Customers"],
