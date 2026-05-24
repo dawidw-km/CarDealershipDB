@@ -162,6 +162,16 @@ class Car(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    is_deleted = models.BooleanField(default=False)
+
+    def soft_delete(self):
+        """
+        Soft deletes the car.
+        """
+        self.is_deleted = True
+        self.save()
+
+
     def __str__(self):
         return f"{self.brand} {self.model} ({self.year})"
 

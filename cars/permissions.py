@@ -6,11 +6,11 @@ class CannotDeleteSoldCar(BasePermission):
     Custom permission preventing deletion of sold cars.
     """
     def has_object_permission(self, request, view, obj):
-        if request.method == 'DELETE':
+        if request.method in ['PUT', 'PATCH']:
             return obj.status != Status.SOLD
         return True
     
-    
+
 class CannotModifySoldCar(BasePermission):
     """
     Custom permission preventing modification of sold cars.
@@ -41,15 +41,30 @@ class CanChangeCarModerationStatus(BasePermission):
         return True
 
 
-class IsCarOwner(BasePermission):
+class IsCarOwnerOrSuperuser(BasePermission):
     """
-    Custom permission allowing user/staff to access only their own cars.
+    Customers can access only their own cars.
+    Superusers have full access to all cars.
     """
     def has_object_permission(self, request, view, obj):
 
         if request.user.is_superuser:
             return True
-        
+
+        return(
+            hasattr(request.user, 'customer_profile') and 
+            obj.owner == request.user.customer_profile
+        )
+
+class CanViewCar(BasePermission):
+    """
+    Allow customers to view their own cars.
+    Allow employees and superusers to view any car.
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True
+
         if hasattr(request.user, 'employee_profile'):
             return True
 
