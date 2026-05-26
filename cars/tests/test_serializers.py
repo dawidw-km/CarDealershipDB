@@ -5,9 +5,12 @@ from ..serializers import (
     CarRegistrationSerializer,
     CarDetailUpdateSerializer,
     CarModerationStatusUpdateSerializer,
-    CarSoftDeleteSerializer
+    CarSoftDeleteSerializer,
+    ModerationStatusUpdateSerializerApproved,
+    ModerationStatusUpdateSerializerRejected
 )
-from person.models import Customer
+from ..models import ModerationStatus
+from person.models import Customer, Employee
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -16,28 +19,54 @@ class CarRegistrationSerializerTestCase(TestCase):
 
     # Helper methods to create test data
 
-    def create_customer(self):
+    def create_user(self, email):
         """
-        Creates a new customer user and returns the customer object.
+        Creates a new user and returns the user object.
         """
-        user = User.objects.create_user(
-            username="testuser",
-            email="testuser@example.com",
+        return User.objects.create_user(
+            username=email,
+            email=email,
             password="testpassword"
         )
+
+    def create_customer(self, email):
+        """
+        Creates a new customer and returns the customer object.
+        """
+        user = self.create_user("testcustomer@example.com")
+
         return Customer.objects.create(
             user=user,
             first_name="John",
             last_name="Doe",
-            email="testuser@example.com",
+            email=email,
             phone_number="+48123456789",
             address="123 Main St, Anytown, USA",
             date_of_birth=date(1990, 1, 1)
         )
 
-    def create_car(self):
+    def create_employee(self, email):
         """
-        Creates a new car object and returns the car object.
+        Creates a new employee and returns the employee object.
+        """
+        user = self.create_user("testemployee@example.com")
+
+        return Employee.objects.create(
+            user=user,
+            first_name="John",
+            last_name="Doe",
+            email=email,
+            phone_number="+48123456789",
+            role=Employee.EmployeeRole.WORKER,
+            salary=5000,
+            hire_date=date(2020, 1, 1),
+            employment_status=Employee.EmploymentStatus.ACTIVE
+        )
+
+
+    def create_valid_car_serializer(self):
+        """
+        Creates a serializer with valid car data.
         """
         return CarRegistrationSerializer(data={
             "brand": "Toyota",
@@ -57,8 +86,8 @@ class CarRegistrationSerializerTestCase(TestCase):
     # Test cases
 
     def test_car_registration_serializer_is_valid(self):
-        customer = self.create_customer()
-        serializer = self.create_car()
+        customer = self.create_customer("testcustomer@example.com")
+        serializer = self.create_valid_car_serializer()
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
@@ -80,17 +109,40 @@ class CarRegistrationSerializerTestCase(TestCase):
 
 
     def test_car_registration_serializer_with_invalid_data(self):
-        customer = self.create_customer()
-        serializer = self.create_car()
-        serializer.initial_data['year'] = -1
-        serializer.initial_data['vin'] = "INVALID"
-        serializer.initial_data['mileage'] = 2000001
-        serializer.initial_data['mileage'] = -1
-        serializer.is_valid(raise_exception=True)
-        with self.assertRaises(ValidationError):
-            serializer.save(owner=customer)
+        data = {
+            'year': 1880,
+            'vin': "123456789012345Q7",
+            'mileage': 2000001
+        }
+
+        serializer = self.create_valid_car_serializer()
+
+        serializer.initial_data.update(data)
+        
+        serializer.is_valid()
+
         self.assertEqual(serializer.errors['year'][0], "Year of production cannot be earlier than 1886.")
         self.assertEqual(serializer.errors['vin'][0], "Invalid VIN format.")
         self.assertEqual(serializer.errors['mileage'][0], "Ensure this value is less than or equal to 2000000.")
-        self.assertEqual(serializer.errors['mileage'][0], "Ensure this value is greater than or equal to 0.")
- 
+
+
+    def test_car_detail_update_serializer_is_valid(self):
+        customer = self.create_customer("testcustomer@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        serializer = self.create_valid_car_serializer()
+        serializer.is_valid()
+        car = serializer.save(owner=customer)
+
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+
+        serializer = ModerationStatusUpdateSerializerApproved(data={
+            "moderation_status": ModerationStatus.APPROVED
+        })
+        serializer.is_valid()
+        car = serializer.save(reviewer=employee)
+
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertEqual(car.reviewer, employee)
+
+
