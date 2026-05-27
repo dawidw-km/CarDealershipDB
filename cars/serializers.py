@@ -260,12 +260,17 @@ class BaseModerationStatusUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.moderation_status = self.TARGET_MODERATION_STATUS
 
-        instance.reviewer = getattr(
+        get_employee = getattr(
             self.context['request'].user,
             'employee_profile',
             None
         )
 
+        if get_employee is None:
+            raise serializers.ValidationError("You are not authorized to update the moderation status of this car.")
+            
+        instance.reviewer = get_employee
+    
         try:
             instance.full_clean(exclude=["owner"])
         except ValidationError as e:
@@ -284,6 +289,7 @@ class ModerationStatusUpdateSerializerApproved(BaseModerationStatusUpdateSeriali
     """
     Serializer for updating the moderation status of a car to approved by superuser or an employee.
     """
+
     TARGET_MODERATION_STATUS = ModerationStatus.APPROVED
 
 
@@ -292,4 +298,3 @@ class ModerationStatusUpdateSerializerRejected(BaseModerationStatusUpdateSeriali
     Serializer for updating the moderation status of a car to rejected by superuser or an employee.
     """
     TARGET_MODERATION_STATUS = ModerationStatus.REJECTED
-
