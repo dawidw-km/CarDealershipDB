@@ -141,6 +141,14 @@ class Car(models.Model):
         default=Status.AVAILABLE,
     )
 
+    buyer = models.ForeignKey(
+        'person.Customer',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='bought_cars'
+    )
+
     description = models.TextField(
             blank=True,
             validators=[MaxLengthValidator(500)]
@@ -213,6 +221,15 @@ class Car(models.Model):
                 "Sold vehicle must be approved."
                 )
 
+        if self.buyer is None:
+            raise ValidationError(
+                "Sold vehicle must have a buyer."
+                )
+        
+        if self.buyer == self.owner:
+            raise ValidationError(
+                "Vehicle owner cannot buy their own vehicle."
+                )
 
     def clean(self):
 

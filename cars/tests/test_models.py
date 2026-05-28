@@ -186,9 +186,11 @@ class CarTestCase(TestCase):
     
     def test_sold_vehicle_with_valid_data_passes_validation(self):
         car = self.create_car()
+        car_buyer = self.create_customer("testcustomer11@gmail.com")
         car.status = Status.SOLD
         car.reviewer = self.create_employee_worker("testemployee1@gmail.com")
         car.moderation_status = ModerationStatus.APPROVED
+        car.buyer = car_buyer
         car.full_clean()
 
     def test_listing_price_must_be_greater_than_0(self):
@@ -201,3 +203,24 @@ class CarTestCase(TestCase):
         car = self.create_car()
         car.listing_price = 10000
         car.full_clean()
+
+    def test_sold_vehicle_cannot_be_bought_by_the_owner(self):
+        car_reviewer = self.create_employee_worker("testemployee1@gmail.com")
+        car = self.create_car()
+
+        car.buyer = car.owner
+        car.reviewer = car_reviewer
+        car.moderation_status = ModerationStatus.APPROVED
+        car.status = Status.SOLD
+
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+
+    def test_sold_vehicle_must_have_a_buyer(self):
+        car = self.create_car()
+        car.status = Status.SOLD
+        car.reviewer = self.create_employee_worker("testemployee1@gmail.com")
+        car.moderation_status = ModerationStatus.APPROVED
+        car.buyer = None
+        with self.assertRaises(ValidationError):
+            car.full_clean()

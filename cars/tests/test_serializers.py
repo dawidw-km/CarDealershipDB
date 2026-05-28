@@ -7,9 +7,11 @@ from ..serializers import (
     CarDetailUpdateSerializer,
     ModerationStatusUpdateSerializerApproved,
     ModerationStatusUpdateSerializerRejected,
-    CarSoftDeleteSerializer
+    CarSoftDeleteSerializer,
+    CarPurchaseStatusUpdateSerializerSold,
+    CarPurchaseStatusUpdateSerializerReserved
 )
-from ..models import ModerationStatus
+from ..models import ModerationStatus, Status
 from person.models import Customer, Employee
 from django.contrib.auth import get_user_model
 
@@ -33,7 +35,7 @@ class CarRegistrationSerializerTestCase(TestCase):
         """
         Creates a new customer and returns the customer object.
         """
-        user = self.create_user("testcustomer@example.com")
+        user = self.create_user(email)
 
         return Customer.objects.create(
             user=user,
@@ -49,7 +51,7 @@ class CarRegistrationSerializerTestCase(TestCase):
         """
         Creates a new employee and returns the employee object.
         """
-        user = self.create_user("testemployee@example.com")
+        user = self.create_user(email)
 
         return Employee.objects.create(
             user=user,
@@ -143,9 +145,7 @@ class CarRegistrationSerializerTestCase(TestCase):
         request = HttpRequest()
         request.user = employee.user
 
-        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={
-            "moderation_status": ModerationStatus.APPROVED
-        })
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
         serializer_approved.is_valid(raise_exception=True)
         updated_car = serializer_approved.save()
 
@@ -167,7 +167,6 @@ class CarRegistrationSerializerTestCase(TestCase):
         request.user = employee.user
 
         serializer_rejected = ModerationStatusUpdateSerializerRejected(car, context={"request": request}, data={
-            "moderation_status": ModerationStatus.REJECTED
         })
         serializer_rejected.is_valid(raise_exception=True)
         updated_car = serializer_rejected.save()
@@ -185,9 +184,7 @@ class CarRegistrationSerializerTestCase(TestCase):
         request = HttpRequest()
         request.user = customer.user
 
-        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={
-            "moderation_status": ModerationStatus.APPROVED
-        })
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
 
         serializer_approved.is_valid(raise_exception=True)
         with self.assertRaises(ValidationError):
@@ -209,9 +206,7 @@ class CarRegistrationSerializerTestCase(TestCase):
 
         request = self.request_with_user(employee.user)
 
-        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={
-            "moderation_status": ModerationStatus.APPROVED
-        })
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
         serializer_approved.is_valid(raise_exception=True)
         updated_car = serializer_approved.save()
         self.assertEqual(updated_car.moderation_status, ModerationStatus.APPROVED)
@@ -251,9 +246,7 @@ class CarRegistrationSerializerTestCase(TestCase):
         request = self.request_with_user(employee.user)
         
 
-        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={
-            "moderation_status": ModerationStatus.APPROVED
-        })
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
         serializer_approved.is_valid(raise_exception=True)
         updated_car = serializer_approved.save()
         self.assertEqual(updated_car.moderation_status, ModerationStatus.APPROVED)
@@ -294,7 +287,7 @@ class CarRegistrationSerializerTestCase(TestCase):
         serializer_approved = ModerationStatusUpdateSerializerApproved(
             car,
             context={"request": request},
-            data={"moderation_status": ModerationStatus.APPROVED}
+            data={}
         )
         
         serializer_approved.is_valid(raise_exception=True)
@@ -362,9 +355,7 @@ class CarRegistrationSerializerTestCase(TestCase):
 
         request = self.request_with_user(customer.user)
         
-        serializer_soft_delete = CarSoftDeleteSerializer(car, context={"request": request}, data={
-            "is_deleted": True
-        })
+        serializer_soft_delete = CarSoftDeleteSerializer(car, context={"request": request}, data={})
 
         serializer_soft_delete.is_valid(raise_exception=True)
         updated_car = serializer_soft_delete.save()
@@ -426,4 +417,144 @@ class CarRegistrationSerializerTestCase(TestCase):
             car_2_serializer.is_valid(raise_exception=True)
 
 
+    def test_car_purchase_status_update_serializer_sold(self):
+        customer = self.create_customer("testcustomer@example.com")
+        buyer = self.create_customer("testbuyer@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        car_serializer = self.create_valid_car_serializer()
+        car_serializer.is_valid(raise_exception=True)
+        car = car_serializer.save(owner=customer)
+
+        request = self.request_with_user(employee.user)
+        
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
+        serializer_approved.is_valid(raise_exception=True)
+        approved_car = serializer_approved.save()
+
+        request = self.request_with_user(buyer.user)
+        
+        serializer_sold = CarPurchaseStatusUpdateSerializerSold(approved_car, context={"request": request}, data={})
+        serializer_sold.is_valid(raise_exception=True)
+        updated_car = serializer_sold.save()
+
+        updated_car.refresh_from_db()
+
+        self.assertEqual(updated_car.status, Status.SOLD)
+        self.assertEqual(updated_car.buyer, buyer)
+        self.assertEqual(updated_car.reviewer, employee)
+
     
+    def test_car_purchase_status_update_serializer_reserved(self):
+        customer = self.create_customer("testcustomer@example.com")
+        buyer = self.create_customer("testbuyer@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        car_serializer = self.create_valid_car_serializer()
+        car_serializer.is_valid(raise_exception=True)
+        car = car_serializer.save(owner=customer)
+
+        request = self.request_with_user(employee.user)
+        
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
+        serializer_approved.is_valid(raise_exception=True)
+        approved_car = serializer_approved.save()
+
+        request = self.request_with_user(buyer.user)
+        
+        serializer_reserved = CarPurchaseStatusUpdateSerializerReserved(approved_car, context={"request": request}, data={})
+        serializer_reserved.is_valid(raise_exception=True)
+        updated_car = serializer_reserved.save()
+
+        updated_car.refresh_from_db()
+
+        self.assertEqual(updated_car.status, Status.RESERVED)
+        self.assertEqual(updated_car.buyer, buyer)
+        self.assertEqual(updated_car.reviewer, employee)
+
+    
+    def test_car_cannot_be_purchased_by_non_customer(self):
+        customer = self.create_customer("testcustomer@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        car_serializer = self.create_valid_car_serializer()
+        car_serializer.is_valid(raise_exception=True)
+        car = car_serializer.save(owner=customer)
+
+        request = self.request_with_user(employee.user)
+        
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
+        serializer_approved.is_valid(raise_exception=True)
+        approved_car = serializer_approved.save()
+
+        serializer_sold = CarPurchaseStatusUpdateSerializerSold(approved_car, context={"request": request}, data={})
+        serializer_sold.is_valid(raise_exception=True)
+        with self.assertRaises(ValidationError):
+            serializer_sold.save()
+
+        approved_car.refresh_from_db()
+
+        self.assertEqual(approved_car.status, Status.AVAILABLE)
+        self.assertEqual(approved_car.buyer, None)
+        self.assertEqual(approved_car.reviewer, employee)
+
+
+    def test_reserved_car_can_be_sold_by_the_same_buyer(self):
+        customer = self.create_customer("testcustomer@example.com")
+        buyer = self.create_customer("testreservedbuyer@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        car_serializer = self.create_valid_car_serializer()
+        car_serializer.is_valid(raise_exception=True)
+        car = car_serializer.save(owner=customer)
+        
+        request = self.request_with_user(employee.user)
+
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
+        serializer_approved.is_valid(raise_exception=True)
+        approved_car = serializer_approved.save()
+
+        request = self.request_with_user(buyer.user)
+        
+        serializer_reserved = CarPurchaseStatusUpdateSerializerReserved(approved_car, context={"request": request}, data={})
+        serializer_reserved.is_valid(raise_exception=True)
+        reserved_car = serializer_reserved.save()
+
+        serializer_sold = CarPurchaseStatusUpdateSerializerSold(reserved_car, context={"request": request}, data={})
+        serializer_sold.is_valid(raise_exception=True)
+        updated_car = serializer_sold.save()
+
+        updated_car.refresh_from_db()
+
+        self.assertEqual(updated_car.status, Status.SOLD)
+        self.assertEqual(updated_car.buyer, buyer)
+        self.assertEqual(updated_car.reviewer, employee)
+    
+    def test_reserved_car_cannot_be_sold_by_different_buyer(self):
+        customer = self.create_customer("testcustomer@example.com")
+        reserved_buyer = self.create_customer("testreservedbuyer@example.com")
+        buyer = self.create_customer("testbuyer@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        car_serializer = self.create_valid_car_serializer()
+        car_serializer.is_valid(raise_exception=True)
+        car = car_serializer.save(owner=customer)
+
+        request = self.request_with_user(employee.user)
+        
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
+        serializer_approved.is_valid(raise_exception=True)
+        approved_car = serializer_approved.save()
+
+        request = self.request_with_user(reserved_buyer.user)
+
+        serializer_reserved = CarPurchaseStatusUpdateSerializerReserved(approved_car, context={"request": request}, data={})
+        serializer_reserved.is_valid(raise_exception=True)
+        reserved_car = serializer_reserved.save()
+
+        request = self.request_with_user(buyer.user)
+        serializer_sold = CarPurchaseStatusUpdateSerializerSold(reserved_car, context={"request": request}, data={})
+        serializer_sold.is_valid(raise_exception=True)
+        with self.assertRaises(ValidationError):
+            serializer_sold.save()
+
+        reserved_car.refresh_from_db()
+
+        self.assertEqual(reserved_car.status, Status.RESERVED)
+        self.assertEqual(reserved_car.buyer, reserved_buyer)
+        self.assertEqual(reserved_car.reviewer, employee)

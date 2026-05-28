@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from .models import Car, ModerationStatus
+from .models import Car, ModerationStatus, Status
 
 class CarRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -298,3 +298,88 @@ class ModerationStatusUpdateSerializerRejected(BaseModerationStatusUpdateSeriali
     Serializer for updating the moderation status of a car to rejected by superuser or an employee.
     """
     TARGET_MODERATION_STATUS = ModerationStatus.REJECTED
+
+
+class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for updating the purchase status of a car.
+    """
+
+    TARGET_PURCHASE_STATUS = None
+
+    class Meta:
+        model = Car
+        fields = [
+            "id",
+            "owner",
+            "buyer",
+            "status",
+
+        ]
+
+        read_only_fields = [
+            "id",
+            "owner",
+            "buyer",
+            "status",
+        ]
+
+
+    def validate_purchase(self, instance):
+        """
+        Validates that the purchase status is valid.
+        """
+        get_buyer = getattr(
+            self.context['request'].user,
+            'customer_profile',
+            None
+        )
+
+        if instance.status == Status.SOLD:
+            raise serializers.ValidationError("Sold cars cannot be purchased.")
+        if instance.status == Status.RESERVED:
+            if instance.buyer != get_buyer:
+                raise serializers.ValidationError("You are not authorized to purchase this car.")
+            else:
+                return instance.status
+
+        return instance.status
+
+    def update(self, instance, validated_data):
+        self.validate_purchase(instance)
+
+        buyer = getattr(
+            self.context['request'].user,
+            'customer_profile',
+            None
+        )
+
+        if buyer is None:
+            raise serializers.ValidationError("You are not authorized to update the purchase status of this car.")
+
+        instance.status = self.TARGET_PURCHASE_STATUS
+        instance.buyer = buyer
+
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+
+        instance.save(
+            update_fields=["status", "buyer"]
+        )
+
+        return instance
+
+class CarPurchaseStatusUpdateSerializerSold(BaseCarPurchaseStatusUpdateSerializer):
+    """
+    Serializer for updating the purchase status of a car to sold by superuser or an employee.
+    """
+    TARGET_PURCHASE_STATUS = Status.SOLD
+
+
+class CarPurchaseStatusUpdateSerializerReserved(BaseCarPurchaseStatusUpdateSerializer):
+    """
+    Serializer for updating the purchase status of a car to reserved by superuser or an employee.
+    """
+    TARGET_PURCHASE_STATUS = Status.RESERVED
