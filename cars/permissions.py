@@ -72,3 +72,15 @@ class CanViewCar(BasePermission):
             hasattr(request.user, 'customer_profile') and 
             obj.owner == request.user.customer_profile
         )
+
+class CannotBeCarOwner(BasePermission):
+    """
+    Custom permission to prevent owner from buying their own car.
+    """
+    def has_object_permission(self, request, view, obj):
+        customer = getattr(request.user, 'customer_profile', None)
+
+        if customer is None:
+            return False
+
+        return obj.owner != customer

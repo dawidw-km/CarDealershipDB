@@ -154,55 +154,6 @@ class CarDetailUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CarModerationStatusUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Car
-        fields = [
-            "id",
-            "moderation_status",
-            "reviewer",
-            "created_at"
-        ]
-
-        read_only_fields = [
-            "id",
-            "created_at",
-            "reviewer",
-        ]
-    
-    def validate_moderation_status(self, value):
-        """
-        Validates moderation status if it's Rejected or Approved.
-        """
-        allowed_statuses = [
-            ModerationStatus.REJECTED,
-            ModerationStatus.APPROVED,
-        ]
-
-        if value not in allowed_statuses:
-            raise serializers.ValidationError("Moderation status must be Rejected or Approved.")
-        return value
-
-    def update(self, instance, validated_data):
-        """
-        Updates the moderation status of the car.
-        """
-        instance.moderation_status = validated_data.get('moderation_status', instance.moderation_status)
-        instance.reviewer = getattr(
-            self.context['request'].user,
-            'employee_profile',
-            None
-        )
-
-        try:
-            instance.full_clean(exclude=["owner", "reviewer"])
-        except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
-
-        instance.save()
-        return instance
-
-
 class CarSoftDeleteSerializer(serializers.ModelSerializer):
     """
     Serializer for soft deleting a car.

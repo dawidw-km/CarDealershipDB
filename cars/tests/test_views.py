@@ -57,10 +57,11 @@ class CarViewsTestCase(APITestCase):
             hire_date=date(2020, 1, 1)
         )
 
-    def create_car(self):
-        customer = self.create_customer("testuser1@gmail.com")
+    def create_car(self, owner=None):
+        if owner is None:
+            owner = self.create_customer("unique_owner@gmail.com")
         return Car.objects.create(
-            owner=customer,
+            owner=owner,
             brand="Toyota",
             model="Corolla",
             color="Red",
@@ -104,15 +105,197 @@ class CarViewsTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-
     def test_anonymous_user_cannot_update_car(self):
         data = {
             "brand": "BMW"
         }
+
         car = self.create_car()
+
         response = self.client.patch(
             reverse("car-detail-update", args=[car.id]),
             data,
             format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_anonymous_user_cannot_soft_delete_car(self):
+        car = self.create_car()
+        response = self.client.put(
+            reverse("car-soft-delete", args=[car.id]),
+            {},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_anonymous_user_cannot_change_moderation_status_to_approved(self):
+        car = self.create_car()
+        response = self.client.put(
+            reverse("car-moderation-status-update-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_anonymous_user_cannot_change_moderation_status_to_rejected(self):
+        car = self.create_car()
+        response = self.client.put(
+            reverse("car-moderation-status-update-rejected", args=[car.id]),
+            {},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_anonymous_user_cannot_change_purchase_status_to_sold(self):
+        car = self.create_car()
+        response = self.client.put(
+            reverse("car-purchase-status-update-sold", args=[car.id]),
+            {},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_anonymous_user_cannot_change_purchase_status_to_reserved(self):
+        car = self.create_car()
+        response = self.client.put(
+            reverse("car-purchase-status-update-reserved", args=[car.id]),
+            {},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_customer_can_add_new_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        response = self.client.post(
+            reverse("car-registration"),
+            self.get_valid_car_data(),
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["owner"], customer.id)
+
+    def test_customer_can_update_own_car(self):
+        data = {
+            "brand": "BMW"
+        }
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        car = self.create_car(owner=customer)
+        response = self.client.patch(
+            reverse("car-detail-update", args=[car.id]),
+            data,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "BMW")
+        self.assertEqual(car.owner, customer)
+
+    def test_customer_cannot_update_other_customer_car(self):
+        data = {
+            "brand": "BMW"
+        }
+        customer_owner = self.create_customer("testuser1@gmail.com")
+        customer_not_owner = self.create_customer("testuser2@gmail.com")
+
+        car = self.create_car(owner=customer_owner)
+
+        self.client.force_authenticate(user=customer_not_owner.user)
+        response = self.client.patch(
+            reverse("car-detail-update", args=[car.id]),
+            data,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "Toyota")
+        self.assertEqual(car.owner, customer_owner)
+
+    def test_customer_can_soft_delete_own_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        car = self.create_car(owner=customer)
+        response = self.client.put(
+            reverse("car-soft-delete", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, True)
+
+    def test_customer_cannot_soft_delete_other_customer_car(self):
+        customer_owner = self.create_customer("testuser1@gmail.com")
+        customer_not_owner = self.create_customer("testuser2@gmail.com")
+
+        car = self.create_car(owner=customer_owner)
+
+        self.client.force_authenticate(user=customer_not_owner.user)
+        response = self.client.put(
+            reverse("car-soft-delete", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+
+    def test_customer_cannot_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        car = self.create_car(owner=customer)
+        response = self.client.put(
+            reverse("car-moderation-status-update-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+
+    def test_customer_cannot_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        car = self.create_car(owner=customer)
+        response = self.client.put(
+            reverse("car-moderation-status-update-rejected", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+
+    def test_customer_owner_cannot_change_status_to_sold(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        car = self.create_car(owner=customer)
+        response = self.client.put(
+            reverse("car-purchase-status-update-sold", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.AVAILABLE)
+
+    def test_customer_owner_cannot_change_status_to_reserved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.force_authenticate(user=customer.user)
+        car = self.create_car(owner=customer)
+        response = self.client.put(
+            reverse("car-purchase-status-update-reserved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.AVAILABLE)

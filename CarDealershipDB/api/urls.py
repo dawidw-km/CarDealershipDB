@@ -4,9 +4,12 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from cars.views.api_views import (
     CarRegistrationView,
     CarDetailUpdateView,
-    CarModerationStatusUpdateView,
     CarDetailView,
     CarSoftDeleteView,
+    CarModerationStatusUpdateViewApproved,
+    CarModerationStatusUpdateViewRejected,
+    CarPurchaseStatusUpdateViewSold,
+    CarPurchaseStatusUpdateViewReserved,
     )
 from person.views.api_views import (
     CustomerDetailView,
@@ -104,11 +107,6 @@ urlpatterns = [
         name="car-detail-update"
         ),
     path(
-        "cars/<int:pk>/moderation-status/",
-        CarModerationStatusUpdateView.as_view(),
-        name="car-moderation-status-update"
-        ),
-    path(
         "cars/<int:pk>/",
         CarDetailView.as_view(),
         name="car-detail"
@@ -118,4 +116,24 @@ urlpatterns = [
         CarSoftDeleteView.as_view(),
         name="car-soft-delete"
         ),
+    path(
+        "cars/<int:pk>/moderation-status/approved/",
+        CarModerationStatusUpdateViewApproved.as_view(),
+        name="car-moderation-status-update-approved"
+        ),
+    path(
+        "cars/<int:pk>/moderation-status/rejected/",
+        CarModerationStatusUpdateViewRejected.as_view(),
+        name="car-moderation-status-update-rejected"
+    ),
+    path(
+        "cars/<int:pk>/purchase-status/sold/",
+        CarPurchaseStatusUpdateViewSold.as_view(),
+        name="car-purchase-status-update-sold"
+        ),
+    path(
+        "cars/<int:pk>/purchase-status/reserved/",
+        CarPurchaseStatusUpdateViewReserved.as_view(),
+        name="car-purchase-status-update-reserved"
+    )
 ]
