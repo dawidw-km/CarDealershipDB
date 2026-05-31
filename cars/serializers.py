@@ -285,6 +285,9 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
             'customer_profile',
             None
         )
+        
+        if instance.moderation_status != ModerationStatus.APPROVED:
+            raise serializers.ValidationError("Car is not approved.")
 
         if instance.status == Status.SOLD:
             raise serializers.ValidationError("Sold cars cannot be purchased.")
@@ -293,8 +296,6 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You are not authorized to purchase this car.")
             else:
                 return instance.status
-
-        return instance.status
 
     def update(self, instance, validated_data):
         self.validate_purchase(instance)

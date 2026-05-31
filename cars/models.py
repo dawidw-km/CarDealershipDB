@@ -204,6 +204,33 @@ class Car(models.Model):
                 "New vehicle cannot have mileage greater than 100 km"
                 )
 
+    def validate_reserved_vehicle_rules(self):
+        """
+        Validates that a reserved vehicle has a buyer and a moderation status of approved.
+        """
+        if self.status != Status.RESERVED:
+            return
+
+        if self.buyer is None:
+            raise ValidationError(
+                "Reserved vehicle must have a buyer."
+                )
+
+        if self.moderation_status != ModerationStatus.APPROVED:
+            raise ValidationError(
+                "Reserved vehicle must be approved."
+                )
+
+        if self.reviewer is None:
+            raise ValidationError(
+                "Reserved vehicle must have a reviewer."
+                )
+
+        if self.buyer == self.owner:
+            raise ValidationError(
+                "Vehicle owner cannot reserve their own vehicle."
+                )
+
     def validate_sold_vehicle_rules(self):
         """
         Validates that a sold vehicle has a reviewer and a moderation status of approved.
@@ -236,4 +263,5 @@ class Car(models.Model):
         super().clean()
 
         self.validate_new_vehicle()
+        self.validate_reserved_vehicle_rules()
         self.validate_sold_vehicle_rules()
