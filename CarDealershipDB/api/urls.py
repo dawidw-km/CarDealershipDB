@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from cars.views.api_views import (
     CarRegistrationView,
     CarDetailUpdateView,
-    CarDetailView,
+    AllCarsDetailView,
     CarSoftDeleteView,
     CarModerationStatusUpdateViewApproved,
     CarModerationStatusUpdateViewRejected,
@@ -108,7 +108,7 @@ urlpatterns = [
         ),
     path(
         "cars/<int:pk>/",
-        CarDetailView.as_view(),
+        AllCarsDetailView.as_view(),
         name="car-detail"
         ),
     path(

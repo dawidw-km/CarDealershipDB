@@ -56,7 +56,7 @@ class IsCarOwnerOrSuperuser(BasePermission):
             obj.owner == request.user.customer_profile
         )
 
-class CanViewCar(BasePermission):
+class CanViewOwnOrStaffCar(BasePermission):
     """
     Allow customers to view their own cars.
     Allow employees and superusers to view any car.

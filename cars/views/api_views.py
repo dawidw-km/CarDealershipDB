@@ -1,7 +1,6 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiExample 
-from cars.models import Car
 from cars.serializers import (
     CarRegistrationSerializer,
     CarDetailUpdateSerializer,
@@ -19,12 +18,13 @@ from cars.permissions import (
     CanChangeCarModerationStatus,
     CannotDeleteSoldCar,
     CannotModifySoldCar,
-    CanViewCar,
+    CanViewOwnOrStaffCar,
     CannotBeCarOwner,
 )
 from person.permissions import IsEmployeeActive
 
-@extend_schema(tags=["Cars"], examples=[
+
+@extend_schema(tags=["Cars - Authenticated-Customer"], examples=[
     OpenApiExample(
         name="Car registration",
         value={
@@ -47,7 +47,7 @@ from person.permissions import IsEmployeeActive
 ])
 class CarRegistrationView(generics.CreateAPIView):
     """
-    Allow customers to register a new car.
+    Allow authenticated customers to register a new car.
     """
     queryset = Car.objects.all()
     serializer_class = CarRegistrationSerializer
@@ -57,27 +57,28 @@ class CarRegistrationView(generics.CreateAPIView):
         serializer.save(owner=self.request.user.customer_profile)
 
 
-@extend_schema(tags=["Cars"])
+@extend_schema(tags=["Cars - Owner & Superuser"])
 class CarDetailUpdateView(generics.UpdateAPIView):
     """
-    Allow customers to update their own car details.
+    Allow owner to update their own car details.
     Allow superuser to update any car details.
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarDetailUpdateSerializer
     permission_classes = [IsAuthenticated, IsCarOwnerOrSuperuser, CannotModifySoldCar]
 
-@extend_schema(tags=["Cars"])
-class CarDetailView(generics.RetrieveAPIView):
+@extend_schema(tags=["Cars - Owner & Staff & Superuser"])
+class AllCarsDetailView(generics.RetrieveAPIView):
     """
-    Allow customers to retrieve details of their own car.
-    Allow employees and superuser to retrieve details of any car.
+    Allow owners to retrieve details of their own car.
+    Allow employees to retrieve any car.
+    Allow superusers to retrieve any car.
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarDetailSerializer
-    permission_classes = [IsAuthenticated, CanViewCar]
+    permission_classes = [IsAuthenticated, CanViewOwnOrStaffCar]
 
-@extend_schema(tags=["Cars"])
+@extend_schema(tags=["Cars - Owner & Superuser"])
 class CarSoftDeleteView(generics.UpdateAPIView):
     """
     Allow customer to soft delete their own car.
@@ -87,7 +88,7 @@ class CarSoftDeleteView(generics.UpdateAPIView):
     serializer_class = CarSoftDeleteSerializer
     permission_classes = [IsAuthenticated, IsCarOwnerOrSuperuser, CannotDeleteSoldCar]
 
-@extend_schema(tags=["Cars/Employees"])
+@extend_schema(tags=["Cars - Staff"])
 class CarModerationStatusUpdateViewApproved(generics.UpdateAPIView):
     """
     Allow employees to update the moderation status of a car to approved.
@@ -96,7 +97,7 @@ class CarModerationStatusUpdateViewApproved(generics.UpdateAPIView):
     serializer_class = ModerationStatusUpdateSerializerApproved
     permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus]
 
-@extend_schema(tags=["Cars/Employees"])
+@extend_schema(tags=["Cars - Staff"])
 class CarModerationStatusUpdateViewRejected(generics.UpdateAPIView):
     """
     Allow employees to update the moderation status of a car to rejected.
@@ -105,19 +106,19 @@ class CarModerationStatusUpdateViewRejected(generics.UpdateAPIView):
     serializer_class = ModerationStatusUpdateSerializerRejected
     permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus]
 
-@extend_schema(tags=["Cars/Customers"])
+@extend_schema(tags=["Cars - Authenticated-Customer"])
 class CarPurchaseStatusUpdateViewSold(generics.UpdateAPIView):
     """
-    Allow customers to update the purchase status of a car to sold.
+    Allow authenticated customers to update the purchase status of a car to sold.
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarPurchaseStatusUpdateSerializerSold
     permission_classes = [IsAuthenticated, CannotBeCarOwner]
 
-@extend_schema(tags=["Cars/Customers"])
+@extend_schema(tags=["Cars - Authenticated-Customer"])
 class CarPurchaseStatusUpdateViewReserved(generics.UpdateAPIView):
     """
-    Allow customers to update the purchase status of a car to reserved.
+    Allow authenticated users to update the purchase status of a car to reserved.
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarPurchaseStatusUpdateSerializerReserved

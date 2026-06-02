@@ -47,6 +47,7 @@ class CarDetailSerializer(serializers.ModelSerializer):
         model = Car
         fields = [
             "id",
+            "owner",
             "brand",
             "model",
             "color",
