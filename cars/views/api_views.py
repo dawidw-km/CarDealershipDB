@@ -1,5 +1,5 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiExample 
 from cars.serializers import (
     CarRegistrationSerializer,

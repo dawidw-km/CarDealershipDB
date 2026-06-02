@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from person.models import Employee
 from .models import Status
 
 class CannotDeleteSoldCar(BasePermission):
@@ -65,13 +66,15 @@ class CanViewOwnOrStaffCar(BasePermission):
         if request.user.is_superuser:
             return True
 
-        if hasattr(request.user, 'employee_profile'):
-            return True
+        employee = getattr(request.user, 'employee_profile', None)
+        if employee is not None:
+            return employee.employment_status == Employee.EmploymentStatus.ACTIVE
 
-        return(
-            hasattr(request.user, 'customer_profile') and 
-            obj.owner == request.user.customer_profile
-        )
+        customer = getattr(request.user, 'customer_profile', None)
+        if customer is not None:
+            return obj.owner == customer
+
+        return False
 
 class CannotBeCarOwner(BasePermission):
     """

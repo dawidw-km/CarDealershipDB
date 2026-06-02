@@ -532,16 +532,81 @@ class CarViewsTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_car_detail_returns_404_for_deleted_car(self):
+    def test_for_viewer_car_detail_returns_404_for_deleted_car(self):
         customer = self.create_customer("testuser1@gmail.com")
+        viewer = self.create_customer("testuser2@gmail.com")
         car = self.create_car(owner=customer)
         car.is_deleted = True
         car.save()
-
+        self.client.force_authenticate(user=viewer.user)
         response = self.client.get(
             reverse("car-detail", args=[car.id]),
             {},
             format="json"
         )
-
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_for_owner_car_detail_returns_404_for_deleted_car(self):
+        owner = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=owner)
+        car.is_deleted = True
+        car.save()
+        self.client.force_authenticate(user=owner.user)
+        response = self.client.get(
+            reverse("car-detail", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_for_employee_car_detail_returns_404_for_deleted_car(self):
+        owner = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        car = self.create_car(owner=owner)
+        car.is_deleted = True
+        car.save()
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get(
+            reverse("car-detail", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_for_superuser_car_detail_returns_404_for_deleted_car(self):
+        superuser = self.create_superuser("testuser1@gmail.com")
+        car = self.create_car()
+        car.is_deleted = True
+        car.save()
+        self.client.force_authenticate(user=superuser)
+        response = self.client.get(
+            reverse("car-detail", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_car_detail_returns_404_for_non_existent_car(self):
+        viewer = self.create_customer("testuser2@gmail.com")
+        self.client.force_authenticate(user=viewer.user)
+        response = self.client.get(
+            reverse("car-detail", args=[999999]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_inactive_employee_cannot_view_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.layoff_date = date(2024, 1, 1)
+        employee.save()
+        car = self.create_car(owner=customer)
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get(
+            reverse("car-detail", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
