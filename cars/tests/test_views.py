@@ -1,106 +1,12 @@
 from rest_framework.test import APITestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
-from ..models import Car, Status, ModerationStatus
-from person.models import Customer, Employee
+from ..models import Status, ModerationStatus
+from person.models import Employee
 from datetime import date
 from rest_framework import status
+from .helpers import TestHelpers
 
-User = get_user_model()
-
-class CarViewsTestCase(APITestCase):
-
-    # Helper methods to create test data
-
-    def create_user(self, email):
-        return User.objects.create_user(
-            username=email,
-            email=email,
-            password="testpass123"
-        )
-    
-    def create_superuser(self, email):
-        return User.objects.create_superuser(
-            username=email,
-            email=email,
-            password="testpass123"
-        )
-
-    def create_customer(self, email):
-        user = self.create_user(email)
-        return Customer.objects.create(
-            user=user,
-            first_name="Jan",
-            last_name="Nowak",
-            email=email,
-            phone_number="+48123123123",
-            address="Warszawa 12",
-            date_of_birth=date(2000, 1, 1)
-        )
-    
-    def create_employee_admin(self, email):
-        user = self.create_user(email)
-        return Employee.objects.create(
-            user=user,
-            first_name="Adam",
-            last_name="Kowalski",
-            email=email,
-            phone_number="+48321321321",
-            role=Employee.EmployeeRole.ADMIN,
-            salary=5000,
-            hire_date=date(2020, 1, 1)
-        )
-    
-    def create_employee_worker(self, email):
-        user = self.create_user(email)
-        return Employee.objects.create(
-            user=user,
-            first_name="Adam",
-            last_name="Kowalski",
-            email=email,
-            phone_number="+48321321321",
-            role=Employee.EmployeeRole.WORKER,
-            salary=5000,
-            hire_date=date(2020, 1, 1)
-        )
-
-    def create_car(self, owner=None):
-        if owner is None:
-            owner = self.create_customer("unique_owner@gmail.com")
-        return Car.objects.create(
-            owner=owner,
-            brand="Toyota",
-            model="Corolla",
-            color="Red",
-            vehicle_type="sedan",
-            year=2020,
-            vin="1HGCM82633A004352",
-            mileage=100,
-            fuel_type="gasoline",
-            transmission="manual",
-            vehicle_condition="new",
-            accident_status="accident_free",
-            listing_price=10000,
-            description="This is a new car",
-        )
-
-    def get_valid_car_data(self):
-        return {
-            "brand": "Toyota",
-            "model": "Corolla",
-            "color": "Red",
-            "vehicle_type": "sedan",
-            "year": 2020,
-            "vin": "1HGCM82633A004352",
-            "mileage": 100,
-            "fuel_type": "gasoline",
-            "transmission": "manual",
-            "vehicle_condition": "new",
-            "accident_status": "accident_free",
-            "listing_price": 10000,
-            "description": "This is a new car",
-        }
-
+class CarViewsTestCase(APITestCase, TestHelpers):
 
     # Test cases
 
@@ -328,13 +234,10 @@ class CarViewsTestCase(APITestCase):
     def test_customer_non_owner_can_change_status_to_sold_someone_elses_car(self):
         customer_owner = self.create_customer("testuser1@gmail.com")
         customer_not_owner = self.create_customer("testuser2@gmail.com")
-        employee = self.create_employee_worker("testuser3@gmail.com")
 
         car = self.create_car(owner=customer_owner)
 
-        car.moderation_status = ModerationStatus.APPROVED
-        car.reviewer = employee
-        car.save()
+        car = self.mark_car_as_approved(car)
 
         self.client.force_authenticate(user=customer_not_owner.user)
         response = self.client.put(
@@ -351,12 +254,9 @@ class CarViewsTestCase(APITestCase):
     def test_customer_non_owner_can_change_status_to_reserved_someone_elses_car(self):
         customer_owner = self.create_customer("testuser1@gmail.com")
         customer_not_owner = self.create_customer("testuser2@gmail.com")
-        employee = self.create_employee_worker("testuser3@gmail.com")
         car = self.create_car(owner=customer_owner)
 
-        car.moderation_status = ModerationStatus.APPROVED
-        car.reviewer = employee
-        car.save()
+        car = self.mark_car_as_approved(car)
 
         self.client.force_authenticate(user=customer_not_owner.user)
         response = self.client.put(
@@ -373,16 +273,11 @@ class CarViewsTestCase(APITestCase):
     def test_customer_who_reserved_car_can_change_status_to_sold(self):
         customer = self.create_customer("testuser1@gmail.com")
         customer_buyer = self.create_customer("testuser2@gmail.com")
-        employee = self.create_employee_worker("testuser3@gmail.com")
         car = self.create_car(owner=customer)
 
-        car.moderation_status = ModerationStatus.APPROVED
-        car.reviewer = employee
-        car.save()
+        car = self.mark_car_as_approved(car)
 
-        car.status = Status.RESERVED
-        car.buyer = customer_buyer
-        car.save()
+        car = self.mark_car_as_reserved(car, buyer=customer_buyer)
 
         self.client.force_authenticate(user=customer_buyer.user)
         response = self.client.put(
@@ -400,16 +295,11 @@ class CarViewsTestCase(APITestCase):
         customer_owner = self.create_customer("testuser1@gmail.com")
         customer_buyer = self.create_customer("testuser2@gmail.com")
         customer_reserver = self.create_customer("testuser3@gmail.com")
-        employee = self.create_employee_worker("testuser4@gmail.com")
         car = self.create_car(owner=customer_owner)
 
-        car.moderation_status = ModerationStatus.APPROVED
-        car.reviewer = employee
-        car.save()
+        car = self.mark_car_as_approved(car)
 
-        car.status = Status.RESERVED
-        car.buyer = customer_reserver
-        car.save()
+        car = self.mark_car_as_reserved(car, buyer=customer_reserver)
 
         self.client.force_authenticate(user=customer_buyer.user)
         response = self.client.put(
@@ -606,6 +496,148 @@ class CarViewsTestCase(APITestCase):
         self.client.force_authenticate(user=employee.user)
         response = self.client.get(
             reverse("car-detail", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_owner_cannot_update_sold_car(self):
+        data = {
+            "brand": "BMW"
+        }
+
+        owner = self.create_customer("testuser1@gmail.com")
+        buyer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=owner)
+
+        car = self.mark_car_as_approved(car)
+
+        car = self.mark_car_as_sold(car, buyer=buyer)
+
+        self.client.force_authenticate(user=owner.user)
+        response = self.client.put(
+            reverse("car-detail-update", args=[car.id]),
+            data,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertEqual(car.buyer, buyer)
+        self.assertEqual(car.brand, "Toyota")
+
+    def test_owner_cannot_soft_delete_sold_car(self):
+        owner = self.create_customer("testuser1@gmail.com")
+        buyer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=owner)
+
+        car = self.mark_car_as_approved(car)
+        
+        car = self.mark_car_as_sold(car, buyer=buyer)
+
+        self.client.force_authenticate(user=owner.user)
+        response = self.client.put(
+            reverse("car-soft-delete", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+
+    def test_active_employee_can_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.put(
+            reverse("car-moderation-status-update-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertEqual(car.reviewer, employee)
+
+    def test_inactive_employee_cannot_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.layoff_date = date(2024, 1, 1)
+        employee.save()
+        car = self.create_car(owner=customer)
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.put(
+            reverse("car-moderation-status-update-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+    
+    def test_inactive_employee_cannot_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.layoff_date = date(2024, 1, 1)
+        employee.save()
+        car = self.create_car(owner=customer)
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.put(
+            reverse("car-moderation-status-update-rejected", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+
+    def test_active_employee_can_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.put(
+            reverse("car-moderation-status-update-rejected", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.REJECTED)
+        self.assertEqual(car.reviewer, employee)
+
+    def test_employee_cannot_register_car(self):
+        employee = self.create_employee_worker("testuser1@gmail.com")
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.post(
+            reverse("car-registration"),
+            self.get_valid_car_data(),
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_cannot_register_car(self):
+        superuser = self.create_superuser("testuser1@gmail.com")
+        self.client.force_authenticate(user=superuser)
+        response = self.client.post(
+            reverse("car-registration"),
+            self.get_valid_car_data(),
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_cannot_purchase_car_without_customer_profile(self):
+        customer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        superuser = self.create_superuser("testuser1@gmail.com")
+        self.client.force_authenticate(user=superuser)
+        response = self.client.put(
+            reverse("car-purchase-status-update-sold", args=[car.id]),
             {},
             format="json"
         )

@@ -224,3 +224,39 @@ class CarTestCase(TestCase):
         car.buyer = None
         with self.assertRaises(ValidationError):
             car.full_clean()
+
+    def test_reserved_vehicle_must_have_a_buyer(self):
+        car = self.create_car()
+        car.status = Status.RESERVED
+        car.reviewer = self.create_employee_worker("testemployee1@gmail.com")
+        car.moderation_status = ModerationStatus.APPROVED
+        car.buyer = None
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+    
+    def test_reserved_vehicle_must_be_approved(self):
+        car = self.create_car()
+        car.status = Status.RESERVED
+        car.reviewer = self.create_employee_worker("testemployee1@gmail.com")
+        car.moderation_status = ModerationStatus.PENDING
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+
+    def test_reserved_vehicle_must_have_a_reviewer(self):
+        car = self.create_car()
+        car.status = Status.RESERVED
+        car.buyer = self.create_customer("testcustomer11@gmail.com")
+        car.moderation_status = ModerationStatus.APPROVED
+        car.reviewer = None
+        with self.assertRaises(ValidationError):
+            car.full_clean()
+
+    def test_reserved_vehicle_owner_cannot_be_the_buyer(self):
+        car = self.create_car()
+        employee = self.create_employee_worker("testemployee1@gmail.com")
+        car.reviewer = employee
+        car.status = Status.RESERVED
+        car.buyer = car.owner
+        car.moderation_status = ModerationStatus.APPROVED
+        with self.assertRaises(ValidationError):
+            car.full_clean()
