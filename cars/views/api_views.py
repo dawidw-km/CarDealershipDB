@@ -1,12 +1,12 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiExample 
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from cars.models import Car, ModerationStatus
 from cars.serializers import (
     CarRegistrationSerializer,
     CarDetailUpdateSerializer,
     CarDetailSerializer,
     CarSoftDeleteSerializer,
-    Car,
     ModerationStatusUpdateSerializerApproved,
     ModerationStatusUpdateSerializerRejected,
     CarPurchaseStatusUpdateSerializerSold,
@@ -68,7 +68,7 @@ class CarDetailUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated, IsCarOwnerOrSuperuser, CannotModifySoldCar]
 
 @extend_schema(tags=["Cars - Owner & Staff & Superuser"])
-class AllCarsDetailView(generics.RetrieveAPIView):
+class OwnerOrStaffOrSuperuserAllCarsDetailView(generics.RetrieveAPIView):
     """
     Allow owners to retrieve details of their own car.
     Allow employees to retrieve any car.
@@ -77,6 +77,15 @@ class AllCarsDetailView(generics.RetrieveAPIView):
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarDetailSerializer
     permission_classes = [IsAuthenticated, CanViewOwnOrStaffCar]
+
+@extend_schema(tags=["Cars - Details"])
+class AllCarsDetailView(generics.RetrieveAPIView):
+    """
+    Allow all users to retrieve details of any car.
+    """
+    queryset = Car.objects.filter(is_deleted=False, moderation_status=ModerationStatus.APPROVED)
+    serializer_class = CarDetailSerializer
+    permission_classes = [AllowAny]
 
 @extend_schema(tags=["Cars - Owner & Superuser"])
 class CarSoftDeleteView(generics.UpdateAPIView):

@@ -1,8 +1,6 @@
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from ..models import Status, ModerationStatus
-from person.models import Employee
-from datetime import date
 from rest_framework import status
 from .helpers import TestHelpers
 
@@ -354,7 +352,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
 
         self.client.force_authenticate(user=employee.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -367,7 +365,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
 
         self.client.force_authenticate(user=viewer.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -380,7 +378,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         car = self.create_car(owner=customer)
         self.client.force_authenticate(user=superuser)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -391,7 +389,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         self.client.force_authenticate(user=customer.user)
         car = self.create_car(owner=customer)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -404,7 +402,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
 
         self.client.force_authenticate(user=customer_not_owner.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -416,7 +414,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         car = self.create_car(owner=customer)
 
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -426,11 +424,10 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         customer = self.create_customer("testuser1@gmail.com")
         viewer = self.create_customer("testuser2@gmail.com")
         car = self.create_car(owner=customer)
-        car.is_deleted = True
-        car.save()
+        car = self.mark_car_as_deleted(car)
         self.client.force_authenticate(user=viewer.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -439,11 +436,10 @@ class CarViewsTestCase(APITestCase, TestHelpers):
     def test_for_owner_car_detail_returns_404_for_deleted_car(self):
         owner = self.create_customer("testuser1@gmail.com")
         car = self.create_car(owner=owner)
-        car.is_deleted = True
-        car.save()
+        car = self.mark_car_as_deleted(car)
         self.client.force_authenticate(user=owner.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -453,11 +449,10 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         owner = self.create_customer("testuser1@gmail.com")
         employee = self.create_employee_worker("testuser2@gmail.com")
         car = self.create_car(owner=owner)
-        car.is_deleted = True
-        car.save()
+        car = self.mark_car_as_deleted(car)
         self.client.force_authenticate(user=employee.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -466,11 +461,10 @@ class CarViewsTestCase(APITestCase, TestHelpers):
     def test_for_superuser_car_detail_returns_404_for_deleted_car(self):
         superuser = self.create_superuser("testuser1@gmail.com")
         car = self.create_car()
-        car.is_deleted = True
-        car.save()
+        car = self.mark_car_as_deleted(car)
         self.client.force_authenticate(user=superuser)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -480,7 +474,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         viewer = self.create_customer("testuser2@gmail.com")
         self.client.force_authenticate(user=viewer.user)
         response = self.client.get(
-            reverse("car-detail", args=[999999]),
+            reverse("car-detail-not-approved", args=[999999]),
             {},
             format="json"
         )
@@ -489,13 +483,11 @@ class CarViewsTestCase(APITestCase, TestHelpers):
     def test_inactive_employee_cannot_view_car(self):
         customer = self.create_customer("testuser1@gmail.com")
         employee = self.create_employee_worker("testuser2@gmail.com")
-        employee.employment_status = Employee.EmploymentStatus.INACTIVE
-        employee.layoff_date = date(2024, 1, 1)
-        employee.save()
+        employee = self.mark_employee_as_inactive(employee)
         car = self.create_car(owner=customer)
         self.client.force_authenticate(user=employee.user)
         response = self.client.get(
-            reverse("car-detail", args=[car.id]),
+            reverse("car-detail-not-approved", args=[car.id]),
             {},
             format="json"
         )
@@ -564,9 +556,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
     def test_inactive_employee_cannot_change_moderation_status_to_approved(self):
         customer = self.create_customer("testuser1@gmail.com")
         employee = self.create_employee_worker("testuser2@gmail.com")
-        employee.employment_status = Employee.EmploymentStatus.INACTIVE
-        employee.layoff_date = date(2024, 1, 1)
-        employee.save()
+        employee = self.mark_employee_as_inactive(employee)
         car = self.create_car(owner=customer)
         self.client.force_authenticate(user=employee.user)
         response = self.client.put(
@@ -582,9 +572,7 @@ class CarViewsTestCase(APITestCase, TestHelpers):
     def test_inactive_employee_cannot_change_moderation_status_to_rejected(self):
         customer = self.create_customer("testuser1@gmail.com")
         employee = self.create_employee_worker("testuser2@gmail.com")
-        employee.employment_status = Employee.EmploymentStatus.INACTIVE
-        employee.layoff_date = date(2024, 1, 1)
-        employee.save()
+        employee = self.mark_employee_as_inactive(employee)
         car = self.create_car(owner=customer)
         self.client.force_authenticate(user=employee.user)
         response = self.client.put(
@@ -642,3 +630,37 @@ class CarViewsTestCase(APITestCase, TestHelpers):
             format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_anonymous_user_can_view_approved_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        response = self.client.get(
+            reverse("car-detail-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_anonymous_user_cannot_view_not_approved_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        response = self.client.get(
+            reverse("car-detail-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_anonymous_user_cannot_view_deleted_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_deleted(car)
+        response = self.client.get(
+            reverse("car-detail-approved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        

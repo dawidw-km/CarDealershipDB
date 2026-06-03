@@ -113,3 +113,15 @@ class TestHelpers:
         car.buyer = buyer if buyer is not None else self.create_customer("customer_reserve_car@gmail.com")
         car.save()
         return car
+    
+    def mark_employee_as_inactive(self, employee):
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.layoff_date = date(2020, 1, 1)
+        employee.save()
+        return employee
+
+    def mark_car_as_deleted(self, car):
+        car.is_deleted = True
+        car.save()
+        return car
+        

@@ -10,6 +10,7 @@ from cars.views.api_views import (
     CarModerationStatusUpdateViewRejected,
     CarPurchaseStatusUpdateViewSold,
     CarPurchaseStatusUpdateViewReserved,
+    OwnerOrStaffOrSuperuserAllCarsDetailView,
     )
 from person.views.api_views import (
     CustomerDetailView,
@@ -107,9 +108,14 @@ urlpatterns = [
         name="car-detail-update"
         ),
     path(
-        "cars/<int:pk>/",
+        "cars/not-approved/<int:pk>/",
+        OwnerOrStaffOrSuperuserAllCarsDetailView.as_view(),
+        name="car-detail-not-approved"
+        ),
+    path(
+        "cars/approved/<int:pk>/",
         AllCarsDetailView.as_view(),
-        name="car-detail"
+        name="car-detail-approved"
         ),
     path(
         "cars/soft-delete/<int:pk>/",
