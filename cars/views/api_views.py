@@ -132,3 +132,12 @@ class CarPurchaseStatusUpdateViewReserved(generics.UpdateAPIView):
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarPurchaseStatusUpdateSerializerReserved
     permission_classes = [IsAuthenticated, CannotBeCarOwner]
+
+@extend_schema(tags=["Cars - Staff & Superuser"])
+class CarDetailForSoftDeleteView(generics.RetrieveAPIView):
+    """
+    Allow employees and superusers to retrieve details of a car that is soft deleted.
+    """
+    queryset = Car.objects.filter(is_deleted=True)
+    serializer_class = CarDetailSerializer
+    permission_classes = [IsAuthenticated, IsEmployeeActive]

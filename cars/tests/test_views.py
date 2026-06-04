@@ -663,4 +663,80 @@ class CarViewsTestCase(APITestCase, TestHelpers):
             format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+    
+    def test_anonymous_user_cannot_view_soft_deleted_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_deleted(car)
+        response = self.client.get(
+            reverse("car-detail-soft-deleted", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_owner_cannot_view_soft_deleted_cars(self):
+        owner = self.create_customer("owner@gmail.com")
+        car = self.create_car(owner=owner)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_deleted(car)
+
+        self.client.force_authenticate(user=owner.user)
+
+        response = self.client.get(
+            reverse("car-detail-soft-deleted", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_employee_can_view_soft_deleted_cars(self):
+        customer = self.create_customer("test@gmail.com")
+        employee = self.create_employee_worker("test1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_deleted(car)
+
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("car-detail-soft-deleted", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_inactive_employee_cannot_view_soft_deleted_cars(self):
+        customer = self.create_customer("test1@gmail.com")
+        employee = self.create_employee_worker("inactive@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_deleted(car)
+        employee = self.mark_employee_as_inactive(employee)
+
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("car-detail-soft-deleted", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_can_view_soft_deleted_cars(self):
+        customer = self.create_customer("customer@gmail.com")
+        super_user = self.create_superuser("superuser@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_deleted(car)
+
+        self.client.force_authenticate(user=super_user)
+
+        response = self.client.get(
+            reverse("car-detail-soft-deleted", args=[car.id]),
+            {},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
