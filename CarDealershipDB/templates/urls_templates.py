@@ -12,6 +12,7 @@ from person.views.template_views import (
     admin_employee_registration_view,
     logout_view
 )
+from cars.views.template_views import customer_car_registration_view
 
 urlpatterns = [
     path(
@@ -68,5 +69,10 @@ urlpatterns = [
         "logout/",
         logout_view,
         name="logout"
-    )
+        ),
+    path(
+        "customer/car/register/",
+        customer_car_registration_view,
+        name="customer-car-registration-template"
+    ),
 ]
