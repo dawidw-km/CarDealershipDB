@@ -21,9 +21,9 @@ urlpatterns = [
         name="customer-registration-form"
     ),
     path(
-        "login/customer/form/",
+        "login/form/",
         login_view,
-        name="customer-login-form"
+        name="login-form"
     ),
     path(
         "customer/profile/",

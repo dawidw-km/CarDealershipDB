@@ -132,7 +132,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            "/login/customer/form/?next=/customer/profile/update/"
+            "/login/form/?next=/customer/profile/update/"
         )
     
         self.assertFalse(
@@ -200,7 +200,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            "/login/customer/form/?next=/user/change-password/"
+            "/login/form/?next=/user/change-password/"
         )
     
 
@@ -470,7 +470,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            f"{reverse('customer-login-form')}?next={reverse('logout')}"
+            f"{reverse('login-form')}?next={reverse('logout')}"
         )
 
 
@@ -488,7 +488,7 @@ class PersonTemplateViewsTestCase(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("customer-login-form")
+            reverse("login-form")
         )
 
     
@@ -498,7 +498,7 @@ class PersonTemplateViewsTestCase(TestCase):
         employee.layoff_date = date(2024, 1, 1)
         employee.save()
         response = self.client.post(
-            reverse("customer-login-form"),
+            reverse("login-form"),
             {
                 "email": "jack.reacher@example.com",
                 "password": "testpassword"

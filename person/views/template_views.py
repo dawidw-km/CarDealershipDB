@@ -69,7 +69,7 @@ def customer_registration_view(request):
 
         if serializer.is_valid():
             serializer.save()
-            return redirect("customer-login-form")
+            return redirect("login-form")
         
         return render(
             request,
@@ -83,7 +83,7 @@ def customer_registration_view(request):
     )
 
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 def password_change_view(request):
     """
     Render a form to change the authenticated user's password.
@@ -111,7 +111,7 @@ def password_change_view(request):
             elif hasattr(user, 'employee_profile'):
                 return redirect("employee-profile")
             else:
-                return redirect("customer-login-form")
+                return redirect("login-form")
         
         return render(
             request,
@@ -123,14 +123,14 @@ def password_change_view(request):
         "person/password_change.html"
     )
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 def customer_profile_view(request):
     """
     Render the authenticated customer's profile page.
     """
 
     if not hasattr(request.user, 'customer_profile'):
-        return redirect("customer-login-form")
+        return redirect("login-form")
 
     customer = request.user.customer_profile
 
@@ -141,14 +141,14 @@ def customer_profile_view(request):
     )
 
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 def customer_profile_update_view(request):
     """
     Render a form to update the authenticated customer's profile.
     """
 
     if not hasattr(request.user, 'customer_profile'):
-        return redirect("customer-login-form")
+        return redirect("login-form")
 
     customer = request.user.customer_profile
 
@@ -178,7 +178,7 @@ def customer_profile_update_view(request):
         {"customer": customer}
     )
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 @active_employee_required
 def employee_profile_view(request):
     """
@@ -193,7 +193,7 @@ def employee_profile_view(request):
         )
 
     if not hasattr(request.user, 'employee_profile'):
-        return redirect("customer-login-form")
+        return redirect("login-form")
 
     employee = request.user.employee_profile
 
@@ -203,7 +203,7 @@ def employee_profile_view(request):
         {"employee": employee}
     )
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 @active_employee_required
 @admin_employee_required
 def employee_list_view(request):
@@ -219,7 +219,7 @@ def employee_list_view(request):
         {"employees": employees}
     )
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 @active_employee_required
 @admin_employee_required
 def admin_employee_update_view(request, pk):
@@ -259,7 +259,7 @@ def admin_employee_update_view(request, pk):
     )
 
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 @admin_employee_required
 @active_employee_required
 def admin_employee_employment_status_update_view(request, pk):
@@ -298,7 +298,7 @@ def admin_employee_employment_status_update_view(request, pk):
     )
 
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 @admin_employee_required
 @active_employee_required
 def admin_employee_registration_view(request):
@@ -322,10 +322,10 @@ def admin_employee_registration_view(request):
         "person/admin_employee_registration.html"
     )
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 def logout_view(request):
     """
     Log out the authenticated user.
     """
     logout(request)
-    return redirect("customer-login-form")
+    return redirect("login-form")
