@@ -12,8 +12,10 @@ from person.views.template_views import (
     admin_employee_registration_view,
     logout_view
 )
-from cars.views.template_views import customer_car_registration_view
-
+from cars.views.template_views import (
+    customer_car_registration_view,
+    public_car_list_view
+)
 urlpatterns = [
     path(
         "register/customer/form/",
@@ -74,5 +76,10 @@ urlpatterns = [
         "customer/car/register/",
         customer_car_registration_view,
         name="customer-car-registration-template"
+    ),
+    path(
+        "public/cars/",
+        public_car_list_view,
+        name="public-car-list-template"
     ),
 ]

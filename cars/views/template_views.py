@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from cars.serializers import CarRegistrationSerializer
-from cars.models import Car, Status
+from cars.models import Car, Status, ModerationStatus
 
 @login_required(login_url="customer-login-form")
 def customer_car_registration_view(request):
@@ -31,8 +31,7 @@ def customer_car_registration_view(request):
     )
 
 
-@login_required(login_url="customer-login-form")
-def customer_car_list_view(request):
+def public_car_list_view(request):
     """
     Render a list of all cars available for purchase.
     """
@@ -43,6 +42,6 @@ def customer_car_list_view(request):
         )
     return render(
         request,
-        "cars/customer_car_list.html",
+        "cars/public_cars_list.html",
         {"cars": cars}
     )
