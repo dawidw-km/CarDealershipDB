@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 from cars.serializers import CarRegistrationSerializer
 from cars.models import Car, Status, ModerationStatus
 
-@login_required(login_url="customer-login-form")
+@login_required(login_url="login-form")
 def customer_car_registration_view(request):
     """
     Render a form for customers to register a new car.

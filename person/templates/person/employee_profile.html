@@ -29,6 +29,7 @@
     </p>
 </div>
 
+<a href="{% url 'public-car-list-template' %}"><button>View Cars</button></a>
 <a href="{% url 'user-change-password' %}"><button>Change Password</button></a>
 <a href="{% url 'logout' %}"><button>Logout</button></a>
 {% if request.user.is_superuser or request.user.employee_profile.role == 'admin' %}

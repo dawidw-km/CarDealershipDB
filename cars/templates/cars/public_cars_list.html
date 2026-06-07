@@ -46,3 +46,9 @@
 {% if request.user.customer_profile %}
     <a href="{% url 'customer-profile' %}"><button>My Profile</button></a>
 {% endif %}
+{% if request.user.employee_profile %}
+    <a href="{% url 'employee-profile' %}"><button>My Profile</button></a>
+{% endif %}
+{% if request.user.is_superuser %}
+    <a href="{% url 'employee-profile' %}"><button>My Profile</button></a>
+{% endif %}
