@@ -1,0 +1,42 @@
+<!-- cars/templates/cars/employee_deleted_cars_list.html -->
+
+<h1>Deleted Cars List</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Year</th>
+            <th>Vin</th>
+            <th>Vehicle Condition</th>
+            <th>Accident Status</th>
+            <th>Listing Price</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Is Deleted</th>
+            <th>Owner</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for car in cars %}
+            <tr>
+                <td>{{ car.brand }}</td>
+                <td>{{ car.model }}</td>
+                <td>{{ car.color }}</td>
+                <td>{{ car.year }}</td>
+                <td>{{ car.vin }}</td>
+                <td>{{ car.vehicle_condition }}</td>
+                <td>{{ car.accident_status }}</td>
+                <td>{{ car.listing_price }}</td>
+                <td>{{ car.description }}</td>
+                <td>{{ car.status }}</td>
+                <td>{{ car.is_deleted }}</td>
+                <td>{{ car.owner.first_name }} {{ car.owner.last_name }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'employee-profile' %}"><button>My Profile</button></a>

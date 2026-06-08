@@ -235,3 +235,112 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
 
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, login_url+"?next="+next_url)
+
+    def test_employee_can_access_employee_admin_deleted_cars_list_view(self):
+        customer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        self.mark_car_as_deleted(car)
+
+        employee_admin = self.create_employee_admin("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/employee_deleted_cars_list.html")
+        self.assertContains(response, car.brand)
+        self.assertContains(response, car.model)
+
+    def test_employee_is_redirected_to_employee_profile_if_no_deleted_cars(self):
+        employee_admin = self.create_employee_admin("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("employee-profile"))
+
+    def test_employee_worker_is_redirected_to_employee_profile_if_no_deleted_cars(self):
+        employee_worker = self.create_employee_worker("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("employee-profile"))
+
+    def test_employee_worker_can_access_employee_deleted_cars_list_view(self):
+        customer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        self.mark_car_as_deleted(car)
+
+        employee_worker = self.create_employee_worker("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/employee_deleted_cars_list.html")
+        self.assertContains(response, car.brand)
+        self.assertContains(response, car.model)
+
+    def test_anonymous_user_cannot_access_employee_deleted_cars_list_view(self):
+        login_url = reverse("login-form")
+        next_url = reverse("employee-deleted-cars-list-template")
+
+        response = self.client.get(next_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, login_url+"?next="+next_url)
+    
+    def test_superuser_can_access_employee_deleted_cars_list_view(self):
+        customer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        self.mark_car_as_deleted(car)
+
+        superuser = self.create_superuser("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/employee_deleted_cars_list.html")
+        self.assertContains(response, car.brand)
+        self.assertContains(response, car.model)
+    
+    def test_superuser_is_redirected_to_employee_profile_if_no_deleted_cars(self):
+        superuser = self.create_superuser("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("employee-profile"))
+
+    def test_customer_cannot_access_employee_deleted_cars_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("employee-deleted-cars-list-template"))
+
+        self.assertEqual(response.status_code, 403)

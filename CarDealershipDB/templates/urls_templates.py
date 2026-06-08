@@ -15,7 +15,8 @@ from person.views.template_views import (
 from cars.views.template_views import (
     customer_car_registration_view,
     public_car_list_view,
-    owner_car_list_view
+    owner_car_list_view,
+    employee_deleted_cars_list_view
 )
 urlpatterns = [
     path(
@@ -87,5 +88,10 @@ urlpatterns = [
         "me/cars/",
         owner_car_list_view,
         name="owner-cars-list-template"
+    ),
+    path(
+        "employee/deleted/cars/",
+        employee_deleted_cars_list_view,
+        name="employee-deleted-cars-list-template"
     ),
 ]

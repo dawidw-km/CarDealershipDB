@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from cars.serializers import CarRegistrationSerializer
 from cars.models import Car, Status, ModerationStatus
-
+from person.decorators import active_employee_required
 @login_required(login_url="login-form")
 def customer_car_registration_view(request):
     """
@@ -62,5 +62,23 @@ def owner_car_list_view(request):
     return render(
         request,
         "cars/owner_cars_list.html",
+        {"cars": cars}
+    )
+
+@login_required(login_url="login-form")
+@active_employee_required
+def employee_deleted_cars_list_view(request):
+    """
+    Render a list of all deleted cars.
+    """
+
+    cars = Car.objects.filter(is_deleted=True)
+
+    if not cars.exists():
+        return redirect("employee-profile")
+
+    return render(
+        request,
+        "cars/employee_deleted_cars_list.html",
         {"cars": cars}
     )
