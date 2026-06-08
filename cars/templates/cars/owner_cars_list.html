@@ -1,0 +1,50 @@
+<h1>Owner Cars List</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Year</th>
+            <th>Vin</th>
+            <th>Mileage</th>
+            <th>Fuel Type</th>
+            <th>Transmission</th>
+            <th>Vehicle Condition</th>
+            <th>Accident Status</th>
+            <th>Listing Price</th>
+            <th>Description</th>
+            <th>Created At</th>
+            <th>Status</th>
+            <th>Moderation Status</th>
+            <th>Reviewer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for car in cars %}
+            <tr>
+                <td>{{ car.brand }}</td>
+                <td>{{ car.model }}</td>
+                <td>{{ car.color }}</td>
+                <td>{{ car.year }}</td>
+                <td>{{ car.vin }}</td>
+                <td>{{ car.mileage }}</td>
+                <td>{{ car.fuel_type }}</td>
+                <td>{{ car.transmission }}</td>
+                <td>{{ car.vehicle_condition }}</td>
+                <td>{{ car.accident_status }}</td>
+                <td>{{ car.listing_price }}</td>
+                <td>{{ car.description }}</td>
+                <td>{{ car.created_at }}</td>
+                <td>{{ car.status }}</td>
+                <td>{{ car.moderation_status }}</td>
+                <td>{{ car.reviewer.first_name }} {{ car.reviewer.last_name }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if request.user.customer_profile %}
+    <a href="{% url 'customer-profile' %}"><button>My Profile</button></a>
+{% endif %}

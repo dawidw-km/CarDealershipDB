@@ -143,9 +143,7 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
 
 
     def test_public_car_list_view(self):
-
         customer = self.create_customer("testuser1@gmail.com")
-
         self.client.login(
             username="testuser1@gmail.com",
             password="testpass123"
@@ -189,3 +187,51 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
 
         self.assertNotContains(response, car.brand)
         self.assertNotContains(response, car.model)
+
+    def test_owner_can_access_owner_cars_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("owner-cars-list-template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/owner_cars_list.html")
+        self.assertContains(response, car.brand)
+        self.assertContains(response, car.model)
+
+    def test_owner_is_redirected_to_customer_profile_if_no_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("owner-cars-list-template"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("customer-profile"))
+
+    def test_employee_cannot_access_owner_cars_list_view(self):
+        employee = self.create_employee_worker("testuser1@gmail.com")
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.get(reverse("owner-cars-list-template"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_user_cannot_access_owner_cars_list_view(self):
+        login_url = reverse("login-form")
+        next_url = reverse("owner-cars-list-template")
+
+        response = self.client.get(next_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, login_url+"?next="+next_url)

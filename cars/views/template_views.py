@@ -45,3 +45,22 @@ def public_car_list_view(request):
         "cars/public_cars_list.html",
         {"cars": cars}
     )
+
+@login_required(login_url="login-form")
+def owner_car_list_view(request):
+    """
+    Render a list of all cars owned by the authenticated user.
+    """
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied
+
+    cars = Car.objects.filter(owner=request.user.customer_profile)
+
+    if not cars.exists():
+        return redirect("customer-profile")
+
+    return render(
+        request,
+        "cars/owner_cars_list.html",
+        {"cars": cars}
+    )
