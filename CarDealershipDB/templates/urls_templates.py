@@ -16,7 +16,10 @@ from cars.views.template_views import (
     customer_car_registration_view,
     public_car_list_view,
     owner_car_list_view,
-    employee_deleted_cars_list_view
+    employee_deleted_cars_list_view,
+    employee_car_moderation_list_view,
+    employee_car_moderation_update_approved_view,
+    employee_car_moderation_update_rejected_view
 )
 urlpatterns = [
     path(
@@ -94,4 +97,19 @@ urlpatterns = [
         employee_deleted_cars_list_view,
         name="employee-deleted-cars-list-template"
     ),
+    path(
+        "employee/car/moderation/list/",
+        employee_car_moderation_list_view,
+        name="employee-car-moderation-list-template"
+    ),
+    path(
+        "employee/car/moderation/update/<int:pk>/",
+        employee_car_moderation_update_approved_view,
+        name="employee-car-moderation-update-approved-template"
+    ),
+    path(
+        "employee/car/moderation/update/<int:pk>/rejected/",
+        employee_car_moderation_update_rejected_view,
+        name="employee-car-moderation-update-rejected-template"
+    )
 ]
