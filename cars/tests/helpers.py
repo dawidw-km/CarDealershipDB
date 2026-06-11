@@ -23,7 +23,7 @@ class TestHelpers:
 
     def create_customer(self, email):
         user = self.create_user(email)
-        return Customer.objects.create(
+        customer = Customer(
             user=user,
             first_name="Jan",
             last_name="Nowak",
@@ -32,10 +32,13 @@ class TestHelpers:
             address="Warszawa 12",
             date_of_birth=date(2000, 1, 1)
         )
+        customer.full_clean()
+        customer.save()
+        return customer
 
     def create_employee_admin(self, email):
         user = self.create_user(email)
-        return Employee.objects.create(
+        employee = Employee(
             user=user,
             first_name="Adam",
             last_name="Kowalski",
@@ -45,10 +48,13 @@ class TestHelpers:
             salary=5000,
             hire_date=date(2020, 1, 1)
         )
+        employee.full_clean()
+        employee.save()
+        return employee
 
     def create_employee_worker(self, email):
         user = self.create_user(email)
-        return Employee.objects.create(
+        employee = Employee(
             user=user,
             first_name="Adam",
             last_name="Kowalski",
@@ -58,11 +64,14 @@ class TestHelpers:
             salary=5000,
             hire_date=date(2020, 1, 1)
         )
+        employee.full_clean()
+        employee.save()
+        return employee
 
     def create_car(self, owner=None):
         if owner is None:
             owner = self.create_customer("unique_owner@gmail.com")
-        return Car.objects.create(
+        car = Car(
             owner=owner,
             brand="Toyota",
             model="Corolla",
@@ -78,6 +87,9 @@ class TestHelpers:
             listing_price=10000,
             description="This is a new car",
         )
+        car.full_clean()
+        car.save()
+        return car
 
     def get_valid_car_data(self):
         return {
@@ -99,24 +111,34 @@ class TestHelpers:
     def mark_car_as_approved(self, car, reviewer=None):
         car.moderation_status = ModerationStatus.APPROVED
         car.reviewer = reviewer if reviewer is not None else self.create_employee_worker("employee_approve_car@gmail.com")
+        car.full_clean()
         car.save()
         return car
 
     def mark_car_as_sold(self, car, buyer=None):
+        """
+        Marks a car as sold. It has to be approved by a reviewer first.
+        """
         car.status = Status.SOLD
         car.buyer = buyer if buyer is not None else self.create_customer("customer_buy_car@gmail.com")
+        car.full_clean()
         car.save()
         return car
     
     def mark_car_as_reserved(self, car, buyer=None):
+        """
+        Marks a car as reserved. It has to be approved by a reviewer first.
+        """
         car.status = Status.RESERVED
         car.buyer = buyer if buyer is not None else self.create_customer("customer_reserve_car@gmail.com")
+        car.full_clean()
         car.save()
         return car
     
     def mark_employee_as_inactive(self, employee):
         employee.employment_status = Employee.EmploymentStatus.INACTIVE
         employee.layoff_date = date(2020, 1, 1)
+        employee.full_clean()
         employee.save()
         return employee
 
