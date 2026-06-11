@@ -143,7 +143,6 @@ class TestHelpers:
         return employee
 
     def mark_car_as_deleted(self, car):
-        car.is_deleted = True
-        car.save()
+        car.soft_delete()
         return car
         

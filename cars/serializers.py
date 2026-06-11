@@ -171,19 +171,11 @@ class CarSoftDeleteSerializer(serializers.ModelSerializer):
             "is_deleted",
         ]
 
-    def soft_delete(self, instance):
+    def update(self, instance, validated_data):
         """
         Soft deletes the car.
         """
-        instance.is_deleted = True
-        instance.save()
-        return instance
-
-    def update(self, instance, validated_data):
-        """
-        Updates the car.
-        """
-        instance = self.soft_delete(instance)
+        instance.soft_delete()
         return instance
 
 

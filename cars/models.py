@@ -172,18 +172,17 @@ class Car(models.Model):
 
     is_deleted = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"{self.brand} {self.model} ({self.year})"
+
     def soft_delete(self):
         """
         Soft deletes the car.
         """
         self.is_deleted = True
-        self.save()
-
-
-    def __str__(self):
-        return f"{self.brand} {self.model} ({self.year})"
-
-
+        self.save(update_fields=["is_deleted"])
+        return self
+        
     def validate_new_vehicle(self):
         """
         Validates that a new vehicle is accident free and has mileage less than 100 km.
