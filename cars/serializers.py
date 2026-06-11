@@ -277,29 +277,20 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-    def validate_purchase(self, instance):
+    def validate_purchase(self, instance, buyer):
         """
         Validates that the purchase status is valid.
         """
-        get_buyer = getattr(
-            self.context['request'].user,
-            'customer_profile',
-            None
-        )
         
         if instance.moderation_status != ModerationStatus.APPROVED:
             raise serializers.ValidationError("Car is not approved.")
 
         if instance.status == Status.SOLD:
             raise serializers.ValidationError("Sold cars cannot be purchased.")
-        if instance.status == Status.RESERVED:
-            if instance.buyer != get_buyer:
-                raise serializers.ValidationError("You are not authorized to purchase this car.")
-            else:
-                return instance.status
+        if instance.status == Status.RESERVED and instance.buyer != buyer:
+            raise serializers.ValidationError("You are not authorized to purchase this car.")
 
     def update(self, instance, validated_data):
-        self.validate_purchase(instance)
 
         buyer = getattr(
             self.context['request'].user,
@@ -309,6 +300,8 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
 
         if buyer is None:
             raise serializers.ValidationError("You are not authorized to update the purchase status of this car.")
+
+        self.validate_purchase(instance, buyer)
 
         instance.status = self.TARGET_PURCHASE_STATUS
         instance.buyer = buyer
@@ -326,13 +319,13 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
 
 class CarPurchaseStatusUpdateSerializerSold(BaseCarPurchaseStatusUpdateSerializer):
     """
-    Serializer for updating the purchase status of a car to sold by superuser or an employee.
+    Serializer for updating the purchase status of a car to sold by customer.
     """
     TARGET_PURCHASE_STATUS = Status.SOLD
 
 
 class CarPurchaseStatusUpdateSerializerReserved(BaseCarPurchaseStatusUpdateSerializer):
     """
-    Serializer for updating the purchase status of a car to reserved by superuser or an employee.
+    Serializer for updating the purchase status of a car to reserved by customer.
     """
     TARGET_PURCHASE_STATUS = Status.RESERVED
