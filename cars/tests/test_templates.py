@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from .helpers import TestHelpers
-from cars.models import Car
+from cars.models import Car, ModerationStatus
 
 User = get_user_model()
 
@@ -344,3 +344,148 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         response = self.client.get(reverse("employee-deleted-cars-list-template"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_employee_can_access_employee_car_moderation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        employee_worker = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(reverse("employee-car-moderation-list-template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/employee_car_moderation_list.html")
+
+    def test_non_employee_cannot_access_employee_car_moderation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(reverse("employee-car-moderation-list-template"))
+
+        self.assertEqual(response.status_code, 403)
+    
+    def test_anonymous_user_cannot_access_employee_car_moderation_list_view(self):
+        login_url = reverse("login-form")
+        next_url = reverse("employee-car-moderation-list-template")
+
+        response = self.client.get(next_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, login_url+"?next="+next_url)
+
+    def test_superuser_can_access_employee_car_moderation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(reverse("employee-car-moderation-list-template"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/employee_car_moderation_list.html")\
+
+    def test_employee_can_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        employee_worker = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-moderation-update-approved-template",
+            args=[car.id]),
+            )
+        self.assertRedirects(response, reverse("employee-car-moderation-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertEqual(car.reviewer, employee_worker)
+
+    def test_employee_can_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        employee_worker = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse(
+                "employee-car-moderation-update-rejected-template",
+                args=[car.id]),
+            )
+        self.assertRedirects(response, reverse("employee-car-moderation-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.REJECTED)
+        self.assertEqual(car.reviewer, employee_worker)
+
+    def test_admin_employee_can_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        admin_employee = self.create_employee_admin("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-moderation-update-approved-template", args=[car.id]),
+        )
+        self.assertRedirects(response, reverse("employee-car-moderation-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertEqual(car.reviewer, admin_employee)
+
+    def test_admin_employee_can_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        admin_employee = self.create_employee_admin("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-moderation-update-rejected-template", args=[car.id]),
+        )
+        self.assertRedirects(response, reverse("employee-car-moderation-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.REJECTED)
+        self.assertEqual(car.reviewer, admin_employee)
+        
+    def test_anonymous_user_cannot_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        login_url = reverse("login-form")
+        next_url = reverse("employee-car-moderation-update-approved-template", args=[car.id])
+
+        response = self.client.post(
+            reverse("employee-car-moderation-update-approved-template", args=[car.id]),
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, login_url+"?next="+next_url)
+        
+    def test_anonymous_user_cannot_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        login_url = reverse("login-form")
+        next_url = reverse("employee-car-moderation-update-rejected-template", args=[car.id])
+
+        response = self.client.post(
+            reverse("employee-car-moderation-update-rejected-template", args=[car.id]),
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, login_url+"?next="+next_url)
+        
