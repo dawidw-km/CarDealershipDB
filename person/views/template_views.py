@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from ..models import Employee
+from ..models import Employee, Customer
 from ..serializers import (
     AdminEmployeeEmploymentStatusUpdateSerializer,
     CustomerRegistrationSerializer,
@@ -329,3 +329,16 @@ def logout_view(request):
     """
     logout(request)
     return redirect("login-form")
+
+@login_required(login_url="login-form")
+@active_employee_required
+def customer_list_view(request):
+    """
+    Render a list of all customers for employees or superusers.
+    """
+    customers = Customer.objects.all().order_by("id")
+    return render(
+        request,
+        "person/customer_list.html",
+        {"customers": customers}
+    )

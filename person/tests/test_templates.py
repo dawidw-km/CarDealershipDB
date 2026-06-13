@@ -62,6 +62,13 @@ class PersonTemplateViewsTestCase(TestCase):
             salary=5000,
             hire_date=date(2020, 1, 1)
         )
+    
+    def create_superuser(self, email):
+        return User.objects.create_superuser(
+            username=email,
+            email=email,
+            password="testpassword"
+        )
 
     # Test cases
 
@@ -508,3 +515,85 @@ class PersonTemplateViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Your employee account is inactive.")
         self.assertTemplateUsed(response, "person/login.html")
+
+
+    def test_employee_can_access_customer_list(self):
+        self.create_employee_worker("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.get(
+            reverse("customer-list-template")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_employee_can_access_customer_list(self):
+        self.create_employee_admin("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.get(
+            reverse("customer-list-template")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_superuser_can_access_customer_list(self):
+        self.create_superuser("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.get(
+            reverse("customer-list-template")
+        )
+
+        self.assertEqual(response.status_code, 200)
+    
+    def test_anonymous_user_cannot_access_customer_list(self):
+        response = self.client.get(
+            reverse("customer-list-template")
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f"{reverse('login-form')}?next={reverse('customer-list-template')}")
+
+    def test_customer_cannot_access_customer_list(self):
+        self.create_customer("jack.reacher@example.com")
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+
+        response = self.client.get(
+            reverse("customer-list-template")
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_inactive_employee_cannot_access_customer_list(self):
+        employee = self.create_employee_worker("jack.reacher@example.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.layoff_date = date(2024, 1, 1)
+        employee.save()
+
+        self.client.login(
+            username="jack.reacher@example.com",
+            password="testpassword"
+        )
+        
+        response = self.client.get(
+            reverse("customer-list-template")
+        )
+
+        self.assertEqual(response.status_code, 403)

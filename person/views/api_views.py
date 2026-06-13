@@ -69,6 +69,15 @@ class CustomerDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user.customer_profile
 
+@extend_schema(tags=["Customers"])
+class CustomerListView(generics.ListAPIView):
+    """
+    Allow employees or superusers to list all customer profiles.
+    """
+    queryset = Customer.objects.all().order_by("id")
+    serializer_class = CustomerDetailSerializer
+    permission_classes = [IsAuthenticated, IsEmployeeActive]
+
 @extend_schema(tags=["Authentication"])
 class ChangePasswordView(generics.UpdateAPIView):
     """

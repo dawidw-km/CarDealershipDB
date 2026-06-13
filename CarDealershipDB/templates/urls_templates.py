@@ -2,6 +2,7 @@ from django.urls import path
 from person.views.template_views import (
     admin_employee_employment_status_update_view,
     customer_registration_view,
+    customer_list_view,
     login_view,
     customer_profile_view,
     customer_profile_update_view,
@@ -77,6 +78,11 @@ urlpatterns = [
         logout_view,
         name="logout"
         ),
+    path(
+        "customer/list/",
+        customer_list_view,
+        name="customer-list-template"
+    ),
     path(
         "customer/car/register/",
         customer_car_registration_view,

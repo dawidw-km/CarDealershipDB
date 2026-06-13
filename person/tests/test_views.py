@@ -61,6 +61,13 @@ class PersonViewsTestCase(APITestCase):
             salary=5000,
             hire_date=date(2020, 1, 1)
         )
+    
+    def create_superuser(self, email):
+        return User.objects.create_superuser(
+            username=email,
+            email=email,
+            password="testpass123"
+        )
  
     # Test cases
 
@@ -521,5 +528,58 @@ class PersonViewsTestCase(APITestCase):
 
         response = self.client.get(
             reverse("employee-detail"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_employee_worker_can_list_customers(self):
+        employee = self.create_employee_worker("employee@example.com")
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("customer-list"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_employee_admin_can_list_customers(self):
+        employee = self.create_employee_admin("employee@example.com")
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("customer-list"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_anonymous_user_cannot_list_customers(self):
+        response = self.client.get(
+            reverse("customer-list"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_customer_cannot_list_customers(self):
+        customer = self.create_customer("customer@example.com")
+        self.client.force_authenticate(user=customer.user)
+
+        response = self.client.get(
+            reverse("customer-list"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_can_list_customers(self):
+        superuser = self.create_superuser("superuser@example.com")
+        self.client.force_authenticate(user=superuser)
+
+        response = self.client.get(
+            reverse("customer-list"),
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_inactive_employee_cannot_list_customers(self):
+        employee = self.create_employee_worker("employee@example.com")
+        employee.employment_status = Employee.EmploymentStatus.INACTIVE
+        employee.save()
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("customer-list"),
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

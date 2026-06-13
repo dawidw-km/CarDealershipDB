@@ -15,6 +15,7 @@ from cars.views.api_views import (
     )
 from person.views.api_views import (
     CustomerDetailView,
+    CustomerListView,
     CustomerRegistrationView,
     EmployeeRegistrationView,
     EmployeeListView,
@@ -65,6 +66,11 @@ urlpatterns = [
         "customer/me/",
         CustomerDetailView.as_view(),
         name="customer-detail"
+        ),
+    path(
+        "customers/",
+        CustomerListView.as_view(),
+        name="customer-list"
         ),
     path(
         "change-password/",
