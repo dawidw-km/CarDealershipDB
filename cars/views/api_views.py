@@ -20,6 +20,7 @@ from cars.permissions import (
     CannotModifySoldCar,
     CanViewOwnOrStaffCar,
     CannotBeCarOwner,
+    BlockSuperuserAccess,
 )
 from person.permissions import IsEmployeeActive
 
@@ -104,7 +105,7 @@ class CarModerationStatusUpdateViewApproved(generics.UpdateAPIView):
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = ModerationStatusUpdateSerializerApproved
-    permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus]
+    permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus, BlockSuperuserAccess]
 
 @extend_schema(tags=["Cars - Staff"])
 class CarModerationStatusUpdateViewRejected(generics.UpdateAPIView):
@@ -113,7 +114,7 @@ class CarModerationStatusUpdateViewRejected(generics.UpdateAPIView):
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = ModerationStatusUpdateSerializerRejected
-    permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus]
+    permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus, BlockSuperuserAccess]
 
 @extend_schema(tags=["Cars - Authenticated-Customer"])
 class CarPurchaseStatusUpdateViewSold(generics.UpdateAPIView):

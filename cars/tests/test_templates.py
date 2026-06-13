@@ -489,3 +489,38 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, login_url+"?next="+next_url)
         
+    def test_superuser_cannot_change_moderation_status_to_approved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-moderation-update-approved-template", args=[car.id]),
+        )
+
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+    
+    def test_superuser_cannot_change_moderation_status_to_rejected(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-moderation-update-rejected-template", args=[car.id]),
+        )
+
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)

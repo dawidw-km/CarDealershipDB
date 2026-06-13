@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from cars.serializers import CarRegistrationSerializer, ModerationStatusUpdateSerializerApproved, ModerationStatusUpdateSerializerRejected
 from cars.models import Car, Status, ModerationStatus
-from person.decorators import active_employee_required
+from person.decorators import active_employee_required, block_superuser_access
 @login_required(login_url="login-form")
 def customer_car_registration_view(request):
     """
@@ -98,6 +98,7 @@ def employee_car_moderation_list_view(request):
 
 @login_required(login_url="login-form")
 @active_employee_required
+@block_superuser_access
 def employee_car_moderation_update_approved_view(request, pk):
     """
     Update the moderation status of a car.
@@ -135,6 +136,7 @@ def employee_car_moderation_update_approved_view(request, pk):
 
 @login_required(login_url="login-form")
 @active_employee_required
+@block_superuser_access
 def employee_car_moderation_update_rejected_view(request, pk):
     """
     Update the moderation status of a car.
@@ -143,18 +145,17 @@ def employee_car_moderation_update_rejected_view(request, pk):
         car = Car.objects.get(pk=pk)
     except Car.DoesNotExist:
         return redirect("employee-car-moderation-list-template")
-
+        
     if request.method == "POST":
         serializer = ModerationStatusUpdateSerializerRejected(
             car,
             data=request.POST,
             context={"request": request}
         )
-
         if serializer.is_valid():
             serializer.save()
             return redirect("employee-car-moderation-list-template")
-        
+    
         return render(
             request,
             "cars/employee_car_moderation_list.html",

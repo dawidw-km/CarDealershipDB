@@ -87,3 +87,12 @@ class CannotBeCarOwner(BasePermission):
             return False
 
         return obj.owner != customer
+
+class BlockSuperuserAccess(BasePermission):
+    """
+    Block superuser access to certain views.
+    """
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
+            return False
+        return True

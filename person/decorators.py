@@ -48,3 +48,15 @@ def admin_employee_required(view_func):
         
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
+
+def block_superuser_access(view_func):
+    """
+    Decorator to block superuser access to employee_profile required views.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser:
+            return HttpResponseForbidden("Only employees can access this page.")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
