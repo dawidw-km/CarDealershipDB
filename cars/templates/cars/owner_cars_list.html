@@ -19,6 +19,7 @@
             <th>Status</th>
             <th>Moderation Status</th>
             <th>Reviewer</th>
+            <th>Update</th>
         </tr>
     </thead>
     <tbody>
@@ -40,6 +41,7 @@
                 <td>{{ car.status }}</td>
                 <td>{{ car.moderation_status }}</td>
                 <td>{{ car.reviewer.first_name }} {{ car.reviewer.last_name }}</td>
+                <td><a href="{% url 'owner-car-update-template' car.id %}"><button>Update</button></a></td>
             </tr>
         {% endfor %}
     </tbody>

@@ -1,9 +1,27 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from cars.serializers import CarRegistrationSerializer, ModerationStatusUpdateSerializerApproved, ModerationStatusUpdateSerializerRejected
-from cars.models import Car, Status, ModerationStatus
-from person.decorators import active_employee_required, block_superuser_access
+from cars.serializers import (
+    CarRegistrationSerializer,
+    ModerationStatusUpdateSerializerApproved,
+    ModerationStatusUpdateSerializerRejected,
+    CarDetailUpdateSerializer
+)
+from cars.models import (
+    Car,
+    Status,
+    ModerationStatus,
+    VehicleType,
+    FuelType,
+    Transmission,
+    VehicleCondition,
+    AccidentStatus
+)
+from person.decorators import (
+    active_employee_required,
+    block_superuser_access
+)
+
 @login_required(login_url="login-form")
 def customer_car_registration_view(request):
     """
@@ -168,4 +186,57 @@ def employee_car_moderation_update_rejected_view(request, pk):
         request,
         "cars/employee_car_moderation_list.html",
         {"car": car}
+    )
+
+@login_required(login_url="login-form")
+def onwer_car_update_view(request, pk):
+    """
+    Render a form to update the details of a owner's car.
+    """
+    car_text_choices = {
+        "vehicle_types": VehicleType.choices,
+        "fuel_types": FuelType.choices,
+        "transmissions": Transmission.choices,
+        "vehicle_conditions": VehicleCondition.choices,
+        "accident_statuses": AccidentStatus.choices,
+    }
+
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied("You must be a customer to update a car.")
+
+    try:
+        car = Car.objects.get(
+            pk=pk,
+            owner=request.user.customer_profile,
+            is_deleted=False
+            )
+    except Car.DoesNotExist:
+        return redirect("owner-cars-list-template")
+
+    if request.method == "POST":
+        serializer = CarDetailUpdateSerializer(
+            car,
+            data=request.POST,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("owner-cars-list-template")
+        
+        return render(
+            request,
+            "cars/owner_car_update.html",
+            {
+                "car": car,
+                "errors": serializer.errors,
+                "car_text_choices": car_text_choices,
+            }
+        )
+    return render(
+        request,
+        "cars/owner_car_update.html",
+        {
+            "car": car,
+            "car_text_choices": car_text_choices,
+        }
     )

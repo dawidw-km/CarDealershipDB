@@ -1,0 +1,122 @@
+<h1>Update Car Details</h1>
+
+{% if errors %}
+<div>
+    <h2>Errors:</h2>
+    <ul>
+        {% for field, field_errors in errors.items %}
+            {% for error in field_errors %}
+                <li>{{ field }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label for="brand">Brand:</label>
+        <input
+            type="text"
+            id="brand"
+            name="brand"
+            value="{{ car.brand }}"
+        >
+    </div>
+
+    <div>
+        <label for="model">Model:</label>
+        <input
+            type="text"
+            id="model"
+            name="model"
+            value="{{ car.model }}"
+        >
+    </div>
+
+    <div>
+        <label for="color">Color:</label>
+        <input
+            type="text"
+            id="color"
+            name="color"
+            value="{{ car.color }}"
+        >
+    </div>
+
+    <div>
+        <label for="vehicle_type">Vehicle Type:</label>
+        <select id="vehicle_type" name="vehicle_type">
+            {% for value, label in car_text_choices.vehicle_types %}
+                <option value="{{ value }}" {% if car.vehicle_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="year">Year:</label>
+        <input type="number" id="year" name="year" value="{{ car.year }}">
+    </div>
+
+    <div>
+        <label for="vin">VIN:</label>
+        <input type="text" id="vin" name="vin" value="{{ car.vin }}">
+    </div>
+
+    <div>
+        <label for="mileage">Mileage:</label>
+        <input type="number" id="mileage" name="mileage" value="{{ car.mileage }}">
+    </div>
+
+    <div>
+        <label for="fuel_type">Fuel Type:</label>
+        <select id="fuel_type" name="fuel_type">
+            {% for value, label in car_text_choices.fuel_types %}
+                <option value="{{ value }}" {% if car.fuel_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="transmission">Transmission:</label>
+        <select id="transmission" name="transmission">
+            {% for value, label in car_text_choices.transmissions %}
+                <option value="{{ value }}" {% if car.transmission == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="vehicle_condition">Vehicle Condition:</label>
+        <select id="vehicle_condition" name="vehicle_condition">
+            {% for value, label in car_text_choices.vehicle_conditions %}
+                <option value="{{ value }}" {% if car.vehicle_condition == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="accident_status">Accident Status:</label>
+        <select id="accident_status" name="accident_status">
+            {% for value, label in car_text_choices.accident_statuses %}
+                <option value="{{ value }}" {% if car.accident_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="listing_price">Listing Price:</label>
+        <input type="number" id="listing_price" name="listing_price" value="{{ car.listing_price }}">
+    </div>
+
+    <div>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description">{{ car.description }}</textarea>
+    </div>
+
+    <button type="submit">Update Car</button>
+</form>
+
+<a href="{% url 'owner-cars-list-template' %}"><button>Back to Owner Cars List</button></a>
