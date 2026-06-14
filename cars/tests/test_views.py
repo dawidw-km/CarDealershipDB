@@ -740,3 +740,68 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_superuser_cannot_update_car_that_belongs_to_owner(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.force_authenticate(user=superuser)
+        response = self.client.patch(
+            reverse("car-detail-update", args=[car.id]),
+            {
+                "brand": "BMW",
+            },
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_employee_cannot_update_car_that_belongs_to_owner(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.patch(
+            reverse("car-detail-update", args=[car.id]),
+            {
+                "brand": "BMW",
+            },
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_customer_can_update_critical_moderation_fields_of_own_car_and_updates_moderation_status_to_pending(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        self.client.force_authenticate(user=customer.user)
+        response = self.client.patch(
+            reverse("car-detail-update", args=[car.id]),
+            {
+                "brand": "BMW",
+            },
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+
+    def test_customer_can_update_non_critical_moderation_fields_of_own_car_and_does_not_update_moderation_status(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        self.client.force_authenticate(user=customer.user)
+        response = self.client.patch(
+            reverse("car-detail-update", args=[car.id]),
+            {
+                "description": "This is a new car",
+            },
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.description, "This is a new car")
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertFalse(car.reviewer is None)

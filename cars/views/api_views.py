@@ -17,10 +17,11 @@ from cars.permissions import (
     IsCarOwnerOrSuperuser,
     CanChangeCarModerationStatus,
     CannotDeleteSoldCar,
-    CannotModifySoldCar,
+    CannotModifySoldOrReservedCar,
     CanViewOwnOrStaffCar,
     CannotBeCarOwner,
     BlockSuperuserAccess,
+    IsCarOwner,
 )
 from person.permissions import IsEmployeeActive
 
@@ -58,15 +59,14 @@ class CarRegistrationView(generics.CreateAPIView):
         serializer.save(owner=self.request.user.customer_profile)
 
 
-@extend_schema(tags=["Cars - Owner & Superuser"])
+@extend_schema(tags=["Cars - Owner"])
 class CarDetailUpdateView(generics.UpdateAPIView):
     """
     Allow owner to update their own car details.
-    Allow superuser to update any car details.
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarDetailUpdateSerializer
-    permission_classes = [IsAuthenticated, IsCarOwnerOrSuperuser, CannotModifySoldCar]
+    permission_classes = [IsAuthenticated, IsCarOwner, CannotModifySoldOrReservedCar]
 
 @extend_schema(tags=["Cars - Owner & Staff & Superuser"])
 class OwnerOrStaffOrSuperuserAllCarsDetailView(generics.RetrieveAPIView):

@@ -21,7 +21,7 @@ from cars.views.template_views import (
     employee_car_moderation_list_view,
     employee_car_moderation_update_approved_view,
     employee_car_moderation_update_rejected_view,
-    onwer_car_update_view
+    owner_car_update_view
 )
 urlpatterns = [
     path(
@@ -121,7 +121,7 @@ urlpatterns = [
     ),
     path(
         "me/cars/update/<int:pk>/",
-        onwer_car_update_view,
+        owner_car_update_view,
         name="owner-car-update-template"
     )
 ]

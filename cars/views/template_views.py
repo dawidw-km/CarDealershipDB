@@ -189,7 +189,7 @@ def employee_car_moderation_update_rejected_view(request, pk):
     )
 
 @login_required(login_url="login-form")
-def onwer_car_update_view(request, pk):
+def owner_car_update_view(request, pk):
     """
     Render a form to update the details of a owner's car.
     """
@@ -208,7 +208,8 @@ def onwer_car_update_view(request, pk):
         car = Car.objects.get(
             pk=pk,
             owner=request.user.customer_profile,
-            is_deleted=False
+            is_deleted=False,
+            status=Status.AVAILABLE
             )
     except Car.DoesNotExist:
         return redirect("owner-cars-list-template")

@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from .helpers import TestHelpers
-from cars.models import Car, ModerationStatus
+from cars.models import Car, ModerationStatus, Status
 
 User = get_user_model()
 
@@ -524,3 +524,217 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         car.refresh_from_db()
         self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
         self.assertEqual(car.reviewer, None)
+
+    def test_owner_can_access_owner_car_update_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/owner_car_update.html")
+        self.assertContains(response, car.brand)
+        self.assertContains(response, car.model)
+
+    def test_owner_can_update_own_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        self.mark_car_as_approved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "brand": "BMW",
+                "model": "X5",
+                "color": "Red",
+            }
+        )
+        self.assertRedirects(response, reverse("owner-cars-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "BMW")
+        self.assertEqual(car.model, "X5")
+        self.assertEqual(car.color, "Red")
+
+    def test_owner_cannot_update_own_car_with_invalid_data(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car.vin = "1HGCM82633A004353"
+        car.save()
+        self.mark_car_as_approved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "vin": "invalid_vin",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Invalid VIN format.")
+        car.refresh_from_db()
+        self.assertEqual(car.vin, "1HGCM82633A004353")
+
+    def test_moderation_status_is_updated_to_pending_if_owner_updates_critical_fields_of_own_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        self.mark_car_as_approved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "brand": "Mercedes",
+            }
+        )
+
+        self.assertRedirects(response, reverse("owner-cars-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
+        self.assertEqual(car.reviewer, None)
+
+    def test_moderation_status_is_not_updated_if_owner_updates_non_critical_fields_of_own_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        self.mark_car_as_approved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "description": "This is a new car",
+            }
+        )
+        self.assertRedirects(response, reverse("owner-cars-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.description, "This is a new car")
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertFalse(car.reviewer is None)
+        
+    def test_owner_cannot_update_own_car_that_is_reserved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "brand": "Mercedes",
+                "model": "C-Class",
+            }
+        )
+
+        self.assertRedirects(response, reverse("owner-cars-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "Toyota")
+        self.assertEqual(car.model, "Corolla")
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_owner_cannot_update_own_car_that_is_sold(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "brand": "Mercedes",
+                "model": "C-Class",
+            }
+        )
+        self.assertRedirects(response, reverse("owner-cars-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "Toyota")
+        self.assertEqual(car.model, "Corolla")
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_employee_cannot_update_a_car_that_belongs_to_owner(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "brand": "Mercedes",
+                "model": "C-Class",
+            }
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "Toyota")
+        self.assertEqual(car.model, "Corolla")
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_superuser_cannot_update_a_car_that_belongs_to_owner(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("owner-car-update-template",
+            args=[car.id]),
+            {
+                "brand": "Mercedes",
+                "model": "C-Class",
+            }
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.brand, "Toyota")
+        self.assertEqual(car.model, "Corolla")
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
