@@ -20,6 +20,7 @@
             <th>Moderation Status</th>
             <th>Reviewer</th>
             <th>Update</th>
+            <th>Soft Delete</th>
         </tr>
     </thead>
     <tbody>
@@ -42,6 +43,10 @@
                 <td>{{ car.moderation_status }}</td>
                 <td>{{ car.reviewer.first_name }} {{ car.reviewer.last_name }}</td>
                 <td><a href="{% url 'owner-car-update-template' car.id %}"><button>Update</button></a></td>
+                <td><form method="post" action="{% url 'customer-car-action-update-softdelete-template' car.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Soft Delete</button>
+                </form></td>
             </tr>
         {% endfor %}
     </tbody>
