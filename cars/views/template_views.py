@@ -5,7 +5,8 @@ from cars.serializers import (
     CarRegistrationSerializer,
     ModerationStatusUpdateSerializerApproved,
     ModerationStatusUpdateSerializerRejected,
-    CarDetailUpdateSerializer
+    CarDetailUpdateSerializer,
+    CarSoftDeleteSerializer
 )
 from cars.models import (
     Car,
@@ -28,11 +29,10 @@ def customer_car_registration_view(request):
     Render a form for customers to register a new car.
     """
     if not hasattr(request.user, 'customer_profile'):
-        raise PermissionDenied("You must be a customer to register a car.")
+        raise PermissionDenied
 
     if request.method == "POST":
         serializer = CarRegistrationSerializer(data=request.POST)
-
         if serializer.is_valid():
             serializer.save(owner=request.user.customer_profile)
             return redirect("customer-profile")
@@ -187,6 +187,80 @@ def employee_car_moderation_update_rejected_view(request, pk):
         "cars/employee_car_moderation_list.html",
         {"car": car}
     )
+
+@login_required(login_url="login-form")
+def owner_and_staff_car_soft_delete_view(request, pk):
+    """
+    Soft delete a car.
+    """
+
+    if hasattr(request.user, 'employee_profile'):
+        raise PermissionDenied("Employees are not allowed to soft delete cars.")
+
+    try:
+        car = Car.objects.get(pk=pk)
+    except Car.DoesNotExist:
+        if hasattr(request.user, 'customer_profile'):
+            return redirect("owner-cars-list-template")
+        else:
+            return redirect("public-car-list-template")
+
+    if car.status == Status.RESERVED or car.status == Status.SOLD:
+            raise PermissionDenied("You cannot soft delete a car that is reserved or sold.")
+        
+    if not request.user.is_superuser:
+        if car.owner != request.user.customer_profile:
+            raise PermissionDenied("You cannot soft delete a car that you do not own.")
+
+    if request.method == "POST":
+        serializer = CarSoftDeleteSerializer(
+            car,
+            data=request.POST,
+            context={"request": request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            if hasattr(request.user, 'customer_profile'):
+                return redirect("owner-cars-list-template")
+            elif request.user.is_superuser:
+                return redirect("public-car-list-template")
+        
+        if hasattr(request.user, 'customer_profile'):
+            return render(
+                request,
+                "cars/owner_car_soft_delete.html",
+                {
+                    "car": car,
+                    "errors": serializer.errors
+                }
+            )
+        elif request.user.is_superuser:
+            return render(
+                request,
+                "cars/public_cars_list.html",
+                {
+                    "car": car,
+                    "errors": serializer.errors
+                }
+            )
+        else:
+            return redirect("login-form")
+            
+    if hasattr(request.user, 'customer_profile'):
+        return render(
+            request,
+            "cars/owner_car_soft_delete.html",
+            {"car": car}
+        )
+    elif request.user.is_superuser:
+        return render(
+            request,
+            "cars/public_cars_list.html",
+            {"car": car}
+        )
+    else:
+        return redirect("login-form")
+
 
 @login_required(login_url="login-form")
 def owner_car_update_view(request, pk):

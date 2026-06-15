@@ -738,3 +738,219 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         self.assertEqual(car.brand, "Toyota")
         self.assertEqual(car.model, "Corolla")
         self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+
+    def test_employee_cannot_soft_delete_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+
+    def test_superuser_can_soft_delete_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertRedirects(response, reverse("public-car-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, True)
+    
+    def test_owner_can_soft_delete_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("customer-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+
+        self.assertRedirects(response, reverse("owner-cars-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, True)
+
+    def test_owner_cannot_soft_delete_a_car_that_is_reserved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        
+        response = self.client.post(
+            reverse("customer-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_owner_cannot_soft_delete_a_car_that_is_sold(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("customer-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_employee_cannot_soft_delete_a_car_that_is_sold(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.SOLD)
+
+    def test_employee_cannot_soft_delete_a_car_that_is_reserved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+
+    def test_superuser_cannot_soft_delete_a_car_that_is_reserved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_superuser_cannot_soft_delete_a_car_that_is_sold(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car)
+
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template",
+            args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_anonymous_user_cannot_soft_delete_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        login_url = reverse("login-form")
+        next_url = reverse("customer-car-action-update-softdelete-template", args=[car.id])
+
+        response = self.client.post(
+            reverse("customer-car-action-update-softdelete-template", args=[car.id]),
+            {}
+        )
+        self.assertRedirects(response,
+        login_url+"?next="+next_url
+        )

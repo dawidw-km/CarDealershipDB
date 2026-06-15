@@ -55,6 +55,12 @@
                         <button type="submit">Update Moderation Status (Rejected)</button>
                     </form>
                 </td>
+                <td>
+                    <form method="post" action="{% url 'employee-car-action-update-softdelete-template' car.id %}"></form>
+                    {% csrf_token %}
+                        <button type="submit">Soft delete car</button>
+                    </form>
+                </td>
             </tr>
         {% endfor %}
     </tbody>
