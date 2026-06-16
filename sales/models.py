@@ -6,23 +6,20 @@ from cars.models import Car
 class Sale(models.Model):
 
     class PaymentMethod(models.TextChoices):
-        CASH = 'cash', 'Cash'
         CARD = 'card', 'Card'
         TRANSFER = 'transfer', 'Transfer'
         LEASING = 'leasing', 'Leasing'
 
-    customer = models.ForeignKey(
-        Customer,
-        on_delete=models.CASCADE,
-        related_name='sales'
+    seller = models.ForeignKey(
+        'person.Customer',
+        on_delete=models.PROTECT,
+        related_name='sold_cars_sales'
     )
 
-    employee = models.ForeignKey(
-        Employee,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='sales'
+    buyer = models.ForeignKey(
+        'person.Customer',
+        on_delete=models.PROTECT,
+        related_name='bought_cars_sales'
     )
 
     car = models.ForeignKey(
@@ -32,17 +29,12 @@ class Sale(models.Model):
     )
 
     sale_date = models.DateField()
-
+    transaction_number = models.CharField(max_length=20, unique=True)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)
 
     payment_method = models.CharField(
         max_length=10,
         choices=PaymentMethod.choices
         )
-
-    notes = models.TextField(
-        blank=True,
-        validators=[MaxLengthValidator(1500)]
-        )
     
-    created_at = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
