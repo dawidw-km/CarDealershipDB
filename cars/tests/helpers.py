@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from person.models import Customer, Employee
 from cars.models import Car, ModerationStatus, Status
 from datetime import date
+from django.http import HttpRequest
 
 User = get_user_model()
 
@@ -145,4 +146,12 @@ class TestHelpers:
     def mark_car_as_deleted(self, car):
         car.soft_delete()
         return car
+    
+    def request_with_user(self, user):
+        """
+        Creates a request with a user.
+        """
+        request = HttpRequest()
+        request.user = user
+        return request
         
