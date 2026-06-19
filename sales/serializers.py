@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import uuid
+from cars.models import ModerationStatus, Status
 from .models import Sale
 
 class SaleRegistrationSerializer(serializers.ModelSerializer):
@@ -24,6 +25,23 @@ class SaleRegistrationSerializer(serializers.ModelSerializer):
             "transaction_number",
             "sale_price"
         ]
+    
+    def validate_moderation_status(self):
+        """
+        Validates that the car moderation status is approved.
+        """
+        if self.get_car().moderation_status != ModerationStatus.APPROVED:
+            raise serializers.ValidationError("Car is not approved.")
+    
+    def validate_car_status(self):
+        """
+        Validates that the car status is available.
+        """
+        if self.get_car().status == Status.SOLD:
+            raise serializers.ValidationError("Sold cars cannot be purchased.")
+
+        if self.get_car().status == Status.RESERVED and self.get_car().buyer != self.get_buyer():
+            raise serializers.ValidationError("You are not authorized to purchase this car.")
     
     def get_transaction_number(self):
         """
@@ -53,7 +71,10 @@ class SaleRegistrationSerializer(serializers.ModelSerializer):
         return buyer
 
     def create(self, validated_data):
-        
+
+        self.validate_moderation_status()
+        self.validate_car_status()
+
         buyer = self.get_buyer()
         car = self.get_car()
         transaction_number = self.get_transaction_number()
@@ -68,4 +89,18 @@ class SaleRegistrationSerializer(serializers.ModelSerializer):
         )
         sale.save()
         return sale
-        
+
+class SaleDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sale
+        fields = [
+            "id",
+            "seller",
+            "buyer",
+            "car",
+            "sale_date",
+            "transaction_number",
+            "sale_price",
+            "payment_method",
+        ]
+        read_only_fields = fields

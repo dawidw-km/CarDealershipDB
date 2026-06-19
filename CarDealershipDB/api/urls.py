@@ -26,6 +26,9 @@ from person.views.api_views import (
     EmployeeLoginView,
     CustomerLoginView,
 )
+from sales.views.api_views import (
+    SaleRegistrationView,
+)
 
 router = routers.DefaultRouter()
 
@@ -143,7 +146,7 @@ urlpatterns = [
         "cars/<int:pk>/moderation-status/rejected/",
         CarModerationStatusUpdateViewRejected.as_view(),
         name="car-moderation-status-update-rejected"
-    ),
+        ),
     path(
         "cars/<int:pk>/purchase-status/sold/",
         CarPurchaseStatusUpdateViewSold.as_view(),
@@ -153,5 +156,10 @@ urlpatterns = [
         "cars/<int:pk>/purchase-status/reserved/",
         CarPurchaseStatusUpdateViewReserved.as_view(),
         name="car-purchase-status-update-reserved"
-    )
+        ),
+    path(
+        "sales/cars/<int:pk>/register/",
+        SaleRegistrationView.as_view(),
+        name="sale-car-registration"
+        ),
 ]

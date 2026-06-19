@@ -11,6 +11,7 @@ class SaleSerializerTestCase(TestCase, TestHelpers):
         car = self.create_car(owner)
         buyer = self.create_customer("customer@example.com")
         request = self.request_with_user(buyer.user)
+        car = self.mark_car_as_approved(car)
 
         serializer = SaleRegistrationSerializer(
             data={"payment_method": Sale.PaymentMethod.CARD},
