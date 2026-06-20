@@ -1,0 +1,34 @@
+<h1>Car Payment</h1>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <h2>Car Details</h2>
+    <p>{{ car.brand }} {{ car.model }} {{ car.year }}</p>
+    <p>Price: {{ car.listing_price }}</p>
+
+    <div>
+        <label for="payment_method">Payment Method:</label>
+        <select id="payment_method" name="payment_method">
+            <option value="card">Card</option>
+            <option value="transfer">Transfer</option>
+            <option value="leasing">Leasing</option>
+        </select>
+    </div>
+    <button type="submit">Pay</button>
+</form>
+
+{% if errors %}
+    <div>
+        <h2>Errors:</h2>
+        <ul>
+            {% for field, field_errors in errors.items %}
+                {% for error in field_errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<a href="{% url 'public-car-list-template' %}">Back to Car List</a>

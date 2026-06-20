@@ -20,6 +20,9 @@
             {% if request.user.employee_profile or request.user.is_superuser %}
             <th>Remove a car</th>
             {% endif %}
+            {% if request.user.customer_profile %}
+            <th>Buy a car</th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -45,6 +48,11 @@
                     {% csrf_token %}
                         <button type="submit">Soft delete car</button>
                     </form>
+                </td>
+                {% endif %}
+                {% if request.user.customer_profile %}
+                <td>
+                    <a href="{% url 'sale-car-registration-template' car.id %}"><button>Buy a car</button></a>
                 </td>
                 {% endif %}
             </tr>

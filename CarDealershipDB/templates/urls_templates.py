@@ -24,6 +24,10 @@ from cars.views.template_views import (
     owner_car_update_view,
     owner_and_staff_car_soft_delete_view
 )
+from sales.views.template_views import (
+    customer_sale_registration_view,
+)
+
 urlpatterns = [
     path(
         "register/customer/form/",
@@ -134,5 +138,10 @@ urlpatterns = [
         "me/cars/update/<int:pk>/",
         owner_car_update_view,
         name="owner-car-update-template"
-    )
+    ),
+    path(
+        "customer/sale/register/<int:pk>/",
+        customer_sale_registration_view,
+        name="sale-car-registration-template"
+    ),
 ]
