@@ -1,7 +1,9 @@
 from rest_framework import serializers
 import uuid
 from cars.models import ModerationStatus, Status
+from django.core.exceptions import ValidationError
 from .models import Sale
+from django.db import transaction
 
 class SaleRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,6 +72,7 @@ class SaleRegistrationSerializer(serializers.ModelSerializer):
             
         return buyer
 
+    @transaction.atomic
     def create(self, validated_data):
 
         self.validate_moderation_status()
@@ -87,7 +90,18 @@ class SaleRegistrationSerializer(serializers.ModelSerializer):
             transaction_number=transaction_number,
             payment_method=validated_data['payment_method'],
         )
+
+        car.status = Status.SOLD
+        car.buyer = buyer
+
+        try:
+            car.full_clean()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        
         sale.save()
+        car.save(update_fields=["status", "buyer"])
+        
         return sale
 
 class SaleDetailSerializer(serializers.ModelSerializer):

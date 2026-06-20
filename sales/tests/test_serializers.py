@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 from ..serializers import SaleRegistrationSerializer
 from cars.tests.helpers import TestHelpers
 from sales.models import Sale
+from cars.models import Status
 
 class SaleSerializerTestCase(TestCase, TestHelpers):
 
@@ -62,3 +63,31 @@ class SaleSerializerTestCase(TestCase, TestHelpers):
         serializer.is_valid()
         with self.assertRaises(ValidationError):
             serializer.save()
+
+    def test_ensure_car_status_and_buyer_are_updated(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        buyer = self.create_customer("buyer@example.com")
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+
+        request = self.request_with_user(buyer.user)
+
+        serializer = SaleRegistrationSerializer(
+            data={"payment_method": Sale.PaymentMethod.CARD},
+            context={
+                "request": request,
+                "car": car
+            }
+        )
+
+        serializer.is_valid()
+        sale = serializer.save()
+
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertEqual(car.buyer, buyer)
+        self.assertEqual(sale.seller, car.owner)
+        self.assertEqual(sale.buyer, buyer)
+        self.assertEqual(sale.car, car)
+        

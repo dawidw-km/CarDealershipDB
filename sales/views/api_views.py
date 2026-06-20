@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from sales.models import Sale
 from sales.serializers import SaleRegistrationSerializer, SaleDetailSerializer
 from person.permissions import IsCustomer
+from cars.permissions import CannotBeCarOwner
 from drf_spectacular.utils import extend_schema
 from django.urls import reverse
 from cars.models import Car
@@ -11,10 +12,15 @@ from cars.models import Car
 class SaleRegistrationView(generics.CreateAPIView):
     queryset = Sale.objects.all()
     serializer_class = SaleRegistrationSerializer
-    permission_classes = [IsAuthenticated, IsCustomer]
+    permission_classes = [IsAuthenticated, IsCustomer, CannotBeCarOwner]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         car_id = self.kwargs['pk']
         context['car'] = Car.objects.get(id=car_id)
         return context
+    
+    def create(self, request, *args, **kwargs):
+        car = Car.objects.get(id=self.kwargs['pk'])
+        self.check_object_permissions(request, car)
+        return super().create(request, *args, **kwargs)
