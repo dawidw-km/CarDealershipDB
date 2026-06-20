@@ -2,7 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from cars.models import Car, Status, ModerationStatus
+from sales.models import Sale
 from sales.serializers import SaleRegistrationSerializer
+from person.decorators import active_employee_required
+
 
 @login_required(login_url="login-form")
 def customer_sale_registration_view(request, pk):
@@ -42,4 +45,61 @@ def customer_sale_registration_view(request, pk):
         request,
         "sales/customer_sale_registration_form.html",
         {"car": car}
+    )
+
+
+@login_required(login_url="login-form")
+def buyer_sale_list_view(request):
+    """
+    Render a list of sales for the buyer.
+    """
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied
+
+    sales = Sale.objects.filter(
+        buyer=request.user.customer_profile
+    )
+    if not sales.exists():
+        return redirect("customer-profile")
+
+    return render(
+        request,
+        "sales/sale_list.html",
+        {"sales": sales}
+    )
+
+
+@login_required(login_url="login-form")
+def owner_sale_list_view(request):
+    """
+    Render a list of sales for the owner.
+    """
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied
+
+    sales = Sale.objects.filter(
+        seller=request.user.customer_profile
+    )
+    if not sales.exists():
+        return redirect("customer-profile")
+
+    return render(
+        request,
+        "sales/sale_list.html",
+        {"sales": sales}
+    )
+
+
+@login_required(login_url="login-form")
+@active_employee_required
+def staff_sale_list_view(request):
+    """
+    Render a list of sales for the staff.
+    """
+    sales = Sale.objects.all()
+
+    return render(
+        request,
+        "sales/sale_list.html",
+        {"sales": sales}
     )
