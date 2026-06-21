@@ -780,6 +780,22 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
     def test_owner_can_soft_delete_a_car(self):
         customer = self.create_customer("testuser1@gmail.com")
         car = self.create_car(owner=customer)
+        car_2 = Car.objects.create(
+            owner=customer,
+            brand="Toyota",
+            model="Corolla",
+            color="Red",
+            vehicle_type="sedan",
+            year=2020,
+            vin="1HGCM82633A004353",
+            mileage=100,
+            fuel_type="gasoline",
+            transmission="manual",
+            vehicle_condition="new",
+            accident_status="accident_free",
+            listing_price=10000,
+            description="This is a new car",
+        )
         car = self.mark_car_as_approved(car)
 
         self.client.login(
