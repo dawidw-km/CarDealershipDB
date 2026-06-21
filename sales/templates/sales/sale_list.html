@@ -1,0 +1,36 @@
+{% if request.user.employee_profile or request.user.is_superuser %}
+<h1>Transactions List</h1>
+{% elif request.user.customer_profile %}
+<h1>My Transactions</h1>
+{% endif %}
+<table border="1">
+    <thead>
+        <tr>
+            <th>Seller</th>
+            <th>Buyer</th>
+            <th>Car</th>
+            <th>Sale Date</th>
+            <th>Transaction Number</th>
+            <th>Sale Price</th>
+            <th>Payment Method</th>
+        </tr>
+    </thead>
+<tbody>
+    {% for sale in sales %}
+        <tr>
+            <td>{{ sale.seller.first_name }} {{ sale.seller.last_name }}</td>
+            <td>{{ sale.buyer.first_name }} {{ sale.buyer.last_name }}</td>
+            <td>{{ sale.car.brand }} {{ sale.car.model }}</td>
+            <td>{{ sale.sale_date }}</td>
+            <td>{{ sale.transaction_number }}</td>
+            <td>{{ sale.sale_price }}</td>
+            <td>{{ sale.payment_method }}</td>
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% if request.user.employee_profile or request.user.is_superuser %}
+<a href="{% url 'employee-profile' %}"><button>Back to Employee Profile</button></a>
+{% elif request.user.customer_profile %}
+<a href="{% url 'customer-profile' %}"><button>Back to Customer Profile</button></a>
+{% endif %}
