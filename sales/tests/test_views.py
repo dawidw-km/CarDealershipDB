@@ -190,3 +190,263 @@ class SaleViewsTestCase(APITestCase, TestHelpers):
         car.refresh_from_db()
         self.assertEqual(car.status, Status.RESERVED)
         self.assertEqual(car.buyer, buyer)
+
+    def test_buyer_can_view_their_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        buyer = self.create_customer("buyer@example.com")
+
+        self.client.force_authenticate(user=buyer.user)
+
+        response_post = self.client.post(
+            reverse("sale-car-registration", args=[car.id]),
+            {"payment_method": Sale.PaymentMethod.CARD},
+            format="json"
+        )
+    
+        response_get = self.client.get(
+            reverse("buyer-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response_get.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_get.data["count"], 1)
+        self.assertEqual(response_get.data["results"][0]["buyer"], buyer.id)
+        self.assertEqual(response_get.data["results"][0]["car"], car.id)
+        self.assertEqual(response_get.data["results"][0]["payment_method"], Sale.PaymentMethod.CARD)
+
+    def test_owner_can_view_their_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        buyer = self.create_customer("buyer@example.com")
+
+        self.client.force_authenticate(user=buyer.user)
+
+        response = self.client.post(
+            reverse("sale-car-registration", args=[car.id]),
+            {"payment_method": Sale.PaymentMethod.CARD},
+            format="json"
+        )
+
+        self.client.force_authenticate(user=owner.user)
+
+        response = self.client.get(
+            reverse("owner-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["seller"], owner.id)
+        self.assertEqual(response.data["results"][0]["car"], car.id)
+        self.assertEqual(response.data["results"][0]["payment_method"], Sale.PaymentMethod.CARD)
+    
+    def test_employee_can_view_staff_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        buyer = self.create_customer("buyer@example.com")
+
+        self.client.force_authenticate(user=buyer.user)
+
+        response = self.client.post(
+            reverse("sale-car-registration", args=[car.id]),
+            {"payment_method": Sale.PaymentMethod.CARD},
+            format="json"
+        )
+
+        self.client.force_authenticate(user=employee.user)
+
+        response = self.client.get(
+            reverse("staff-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["seller"], owner.id)
+        self.assertEqual(response.data["results"][0]["car"], car.id)
+        self.assertEqual(response.data["results"][0]["payment_method"], Sale.PaymentMethod.CARD)
+    
+    def test_superuser_can_view_staff_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        buyer = self.create_customer("buyer@example.com")
+        superuser = self.create_superuser("superuser@example.com")
+
+        self.client.force_authenticate(user=buyer.user)
+        
+        response = self.client.post(
+            reverse("sale-car-registration", args=[car.id]),
+            {"payment_method": Sale.PaymentMethod.CARD},
+            format="json"
+        )
+
+        self.client.force_authenticate(user=superuser)
+
+        response = self.client.get(
+            reverse("staff-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["seller"], owner.id)
+        self.assertEqual(response.data["results"][0]["car"], car.id)
+        self.assertEqual(response.data["results"][0]["payment_method"], Sale.PaymentMethod.CARD)
+
+    def test_anonymous_user_cannot_view_buyer_sales_list(self):
+        response = self.client.get(
+            reverse("buyer-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_anonymous_user_cannot_view_owner_sales_list(self):
+        response = self.client.get(
+            reverse("owner-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_anonymous_user_cannot_view_staff_sales_list(self):
+        response = self.client.get(
+            reverse("staff-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_inactive_employee_cannot_view_staff_sales_list(self):
+        inactive_employee = self.create_employee_worker("inactive_employee@example.com")
+        inactive_employee = self.mark_employee_as_inactive(inactive_employee)
+
+        self.client.force_authenticate(user=inactive_employee.user)
+        
+        response = self.client.get(
+            reverse("staff-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_customer_cannot_view_staff_sales_list(self):
+        customer = self.create_customer("customer@example.com")
+
+        self.client.force_authenticate(user=customer.user)
+
+        response = self.client.get(
+            reverse("staff-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_2_cannot_view_user_1_buyer_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        user_1 = self.create_customer("user_1@example.com")
+        user_2 = self.create_customer("user_2@example.com")
+
+        self.client.force_authenticate(user=user_1.user)
+
+        response = self.client.post(
+            reverse("sale-car-registration", args=[car.id]),
+            {"payment_method": Sale.PaymentMethod.CARD},
+            format="json"
+        )
+
+        self.client.force_authenticate(user=user_2.user)
+
+        response = self.client.get(
+            reverse("buyer-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)
+
+    def test_user_2_cannot_view_user_1_owner_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        user_1 = self.create_customer("user_1@example.com")
+        user_2 = self.create_customer("user_2@example.com")
+
+        self.client.force_authenticate(user=user_1.user)
+
+        response = self.client.post(
+            reverse("sale-car-registration", args=[car.id]),
+            {"payment_method": Sale.PaymentMethod.CARD},
+            format="json"
+        )
+
+        self.client.force_authenticate(user=user_2.user)
+
+        response = self.client.get(
+            reverse("owner-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)
+
+    def test_employee_cannot_access_owner_sales_list(self):
+        owner = self.create_customer("owner@example.com")
+        car = self.create_car(owner)
+        employee = self.create_employee_worker("employee@example.com")
+        car = self.mark_car_as_approved(car, employee)
+        buyer = self.create_customer("buyer@example.com")
+
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get(
+            reverse("owner-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_cannot_access_owner_sales_list(self):
+        superuser = self.create_superuser("superuser@example.com")
+
+        self.client.force_authenticate(user=superuser)
+        response = self.client.get(
+            reverse("owner-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_employee_cannot_access_buyer_sales_list(self):
+        employee = self.create_employee_worker("employee@example.com")
+
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get(
+            reverse("buyer-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_cannot_access_buyer_sales_list(self):
+        superuser = self.create_superuser("superuser@example.com")
+
+        self.client.force_authenticate(user=superuser)
+        response = self.client.get(
+            reverse("buyer-sales-list"),
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
