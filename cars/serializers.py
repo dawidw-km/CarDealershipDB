@@ -277,8 +277,6 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
         if instance.moderation_status != ModerationStatus.APPROVED:
             raise serializers.ValidationError("Car is not approved.")
 
-        if instance.status == Status.SOLD:
-            raise serializers.ValidationError("Sold cars cannot be purchased.")
         if instance.status == Status.RESERVED and instance.buyer != buyer:
             raise serializers.ValidationError("You are not authorized to purchase this car.")
 
@@ -308,13 +306,6 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
         )
 
         return instance
-
-class CarPurchaseStatusUpdateSerializerSold(BaseCarPurchaseStatusUpdateSerializer):
-    """
-    Serializer for updating the purchase status of a car to sold by customer.
-    """
-    TARGET_PURCHASE_STATUS = Status.SOLD
-
 
 class CarPurchaseStatusUpdateSerializerReserved(BaseCarPurchaseStatusUpdateSerializer):
     """

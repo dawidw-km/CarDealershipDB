@@ -60,16 +60,6 @@ class CarViewsTestCase(APITestCase, TestHelpers):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_anonymous_user_cannot_change_purchase_status_to_sold(self):
-        car = self.create_car()
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
-            {},
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
     def test_anonymous_user_cannot_change_purchase_status_to_reserved(self):
         car = self.create_car()
         response = self.client.put(
@@ -185,19 +175,6 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
         self.assertEqual(car.reviewer, None)
 
-    def test_customer_owner_cannot_change_status_to_sold(self):
-        customer = self.create_customer("testuser1@gmail.com")
-        self.client.force_authenticate(user=customer.user)
-        car = self.create_car(owner=customer)
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
-            {},
-            format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        car.refresh_from_db()
-        self.assertEqual(car.status, Status.AVAILABLE)
-
     def test_customer_owner_cannot_change_status_to_reserved(self):
         customer = self.create_customer("testuser1@gmail.com")
         self.client.force_authenticate(user=customer.user)
@@ -229,26 +206,6 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         self.assertEqual(car.moderation_status, ModerationStatus.PENDING)
         self.assertEqual(car.reviewer, None)
 
-    def test_customer_non_owner_can_change_status_to_sold_someone_elses_car(self):
-        customer_owner = self.create_customer("testuser1@gmail.com")
-        customer_not_owner = self.create_customer("testuser2@gmail.com")
-
-        car = self.create_car(owner=customer_owner)
-
-        car = self.mark_car_as_approved(car)
-
-        self.client.force_authenticate(user=customer_not_owner.user)
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
-            {},
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        car.refresh_from_db()
-        self.assertEqual(car.status, Status.SOLD)
-        self.assertEqual(car.buyer, customer_not_owner)
-
     def test_customer_non_owner_can_change_status_to_reserved_someone_elses_car(self):
         customer_owner = self.create_customer("testuser1@gmail.com")
         customer_not_owner = self.create_customer("testuser2@gmail.com")
@@ -267,49 +224,6 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         car.refresh_from_db()
         self.assertEqual(car.status, Status.RESERVED)
         self.assertEqual(car.buyer, customer_not_owner)
-    
-    def test_customer_who_reserved_car_can_change_status_to_sold(self):
-        customer = self.create_customer("testuser1@gmail.com")
-        customer_buyer = self.create_customer("testuser2@gmail.com")
-        car = self.create_car(owner=customer)
-
-        car = self.mark_car_as_approved(car)
-
-        car = self.mark_car_as_reserved(car, buyer=customer_buyer)
-
-        self.client.force_authenticate(user=customer_buyer.user)
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
-            {},
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        car.refresh_from_db()
-        self.assertEqual(car.status, Status.SOLD)
-        self.assertEqual(car.buyer, customer_buyer)
-
-    def test_different_customer_cannot_change_status_to_sold_to_reserved_car_by_someone_else(self):
-        customer_owner = self.create_customer("testuser1@gmail.com")
-        customer_buyer = self.create_customer("testuser2@gmail.com")
-        customer_reserver = self.create_customer("testuser3@gmail.com")
-        car = self.create_car(owner=customer_owner)
-
-        car = self.mark_car_as_approved(car)
-
-        car = self.mark_car_as_reserved(car, buyer=customer_reserver)
-
-        self.client.force_authenticate(user=customer_buyer.user)
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
-            {},
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        car.refresh_from_db()
-        self.assertEqual(car.status, Status.RESERVED)
-        self.assertEqual(car.buyer, customer_reserver)
 
     def test_not_approved_car_cannot_be_reserved(self):
         customer = self.create_customer("testuser1@gmail.com")
@@ -319,23 +233,6 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         self.client.force_authenticate(user=customer_reserver.user)
         response = self.client.put(
             reverse("car-purchase-status-update-reserved", args=[car.id]),
-            {},
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        car.refresh_from_db()
-        self.assertEqual(car.status, Status.AVAILABLE)
-        self.assertEqual(car.buyer, None)
-
-    def test_not_approved_car_cannot_be_sold(self):
-        customer = self.create_customer("testuser1@gmail.com")
-        customer_buyer = self.create_customer("testuser2@gmail.com")
-        car = self.create_car(owner=customer)
-
-        self.client.force_authenticate(user=customer_buyer.user)
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
             {},
             format="json"
         )
@@ -615,18 +512,6 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         response = self.client.post(
             reverse("car-registration"),
             self.get_valid_car_data(),
-            format="json"
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_superuser_cannot_purchase_car_without_customer_profile(self):
-        customer = self.create_customer("testuser2@gmail.com")
-        car = self.create_car(owner=customer)
-        superuser = self.create_superuser("testuser1@gmail.com")
-        self.client.force_authenticate(user=superuser)
-        response = self.client.put(
-            reverse("car-purchase-status-update-sold", args=[car.id]),
-            {},
             format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

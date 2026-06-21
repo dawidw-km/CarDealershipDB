@@ -8,7 +8,6 @@ from cars.views.api_views import (
     CarSoftDeleteView,
     CarModerationStatusUpdateViewApproved,
     CarModerationStatusUpdateViewRejected,
-    CarPurchaseStatusUpdateViewSold,
     CarPurchaseStatusUpdateViewReserved,
     OwnerOrStaffOrSuperuserAllCarsDetailView,
     CarDetailForSoftDeleteView,
@@ -149,11 +148,6 @@ urlpatterns = [
         "cars/<int:pk>/moderation-status/rejected/",
         CarModerationStatusUpdateViewRejected.as_view(),
         name="car-moderation-status-update-rejected"
-        ),
-    path(
-        "cars/<int:pk>/purchase-status/sold/",
-        CarPurchaseStatusUpdateViewSold.as_view(),
-        name="car-purchase-status-update-sold"
         ),
     path(
         "cars/<int:pk>/purchase-status/reserved/",

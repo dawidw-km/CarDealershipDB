@@ -9,7 +9,6 @@ from cars.serializers import (
     CarSoftDeleteSerializer,
     ModerationStatusUpdateSerializerApproved,
     ModerationStatusUpdateSerializerRejected,
-    CarPurchaseStatusUpdateSerializerSold,
     CarPurchaseStatusUpdateSerializerReserved,
 )
 from person.permissions import IsCustomer
@@ -115,15 +114,6 @@ class CarModerationStatusUpdateViewRejected(generics.UpdateAPIView):
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = ModerationStatusUpdateSerializerRejected
     permission_classes = [IsAuthenticated, IsEmployeeActive, CanChangeCarModerationStatus, BlockSuperuserAccess]
-
-@extend_schema(tags=["Cars - Authenticated-Customer"])
-class CarPurchaseStatusUpdateViewSold(generics.UpdateAPIView):
-    """
-    Allow authenticated customers to update the purchase status of a car to sold.
-    """
-    queryset = Car.objects.filter(is_deleted=False)
-    serializer_class = CarPurchaseStatusUpdateSerializerSold
-    permission_classes = [IsAuthenticated, CannotBeCarOwner]
 
 @extend_schema(tags=["Cars - Authenticated-Customer"])
 class CarPurchaseStatusUpdateViewReserved(generics.UpdateAPIView):
