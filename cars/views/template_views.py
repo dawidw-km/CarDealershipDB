@@ -72,7 +72,7 @@ def owner_car_list_view(request):
     if not hasattr(request.user, 'customer_profile'):
         raise PermissionDenied
 
-    cars = Car.objects.filter(owner=request.user.customer_profile)
+    cars = Car.objects.filter(owner=request.user.customer_profile, is_deleted=False)
 
     if not cars.exists():
         return redirect("customer-profile")
