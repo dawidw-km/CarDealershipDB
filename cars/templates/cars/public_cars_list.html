@@ -17,7 +17,7 @@
             <th>Description</th>
             <th>Created At</th>
             <th>Owner</th>
-            {% if request.user.employee_profile or request.user.is_superuser %}
+            {% if request.user.is_superuser %}
             <th>Remove a car</th>
             {% endif %}
             {% if request.user.customer_profile %}
@@ -42,7 +42,7 @@
                 <td>{{ car.description }}</td>
                 <td>{{ car.created_at }}</td>
                 <td>{{ car.owner.first_name }} {{ car.owner.last_name }}</td>
-                {% if request.user.employee_profile or request.user.is_superuser %}
+                {% if request.user.is_superuser %}
                 <td>
                     <form method="post" action="{% url 'employee-car-action-update-softdelete-template' car.id %}">
                     {% csrf_token %}
