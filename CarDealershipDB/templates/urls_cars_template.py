@@ -1,0 +1,65 @@
+from django.urls import path
+from cars.views.template_views import (
+    customer_car_registration_view,
+    public_car_list_view,
+    owner_car_list_view,
+    employee_deleted_cars_list_view,
+    employee_car_moderation_list_view,
+    employee_car_moderation_update_approved_view,
+    employee_car_moderation_update_rejected_view,
+    owner_car_update_view,
+    owner_and_staff_car_soft_delete_view
+)
+
+urlpatterns = [
+    path(
+        "customer/car/register/",
+        customer_car_registration_view,
+        name="customer-car-registration-template"
+    ),
+    path(
+        "public/cars/",
+        public_car_list_view,
+        name="public-car-list-template"
+    ),
+    path(
+        "me/cars/",
+        owner_car_list_view,
+        name="owner-cars-list-template"
+    ),
+    path(
+        "employee/deleted/cars/",
+        employee_deleted_cars_list_view,
+        name="employee-deleted-cars-list-template"
+    ),
+    path(
+        "employee/car/moderation/list/",
+        employee_car_moderation_list_view,
+        name="employee-car-moderation-list-template"
+    ),
+    path(
+        "employee/car/moderation/update/<int:pk>/",
+        employee_car_moderation_update_approved_view,
+        name="employee-car-moderation-update-approved-template"
+    ),
+    path(
+        "employee/car/moderation/update/<int:pk>/rejected/",
+        employee_car_moderation_update_rejected_view,
+        name="employee-car-moderation-update-rejected-template"
+    ),
+    path(
+        "employee/car/action/update/<int:pk>/softdelete/",
+        owner_and_staff_car_soft_delete_view,
+        name="employee-car-action-update-softdelete-template"
+    ),
+    path(
+        "customer/car/action/update/<int:pk>/softdelete/",
+        owner_and_staff_car_soft_delete_view,
+        name="customer-car-action-update-softdelete-template"
+    ),
+    path(
+        "me/cars/update/<int:pk>/",
+        owner_car_update_view,
+        name="owner-car-update-template"
+    ),
+]

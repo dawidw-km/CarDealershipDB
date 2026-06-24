@@ -1,0 +1,82 @@
+from django.urls import path
+from person.views.template_views import (
+    admin_employee_employment_status_update_view,
+    customer_registration_view,
+    customer_list_view,
+    login_view,
+    customer_profile_view,
+    customer_profile_update_view,
+    password_change_view,
+    employee_profile_view,
+    employee_list_view,
+    admin_employee_update_view,
+    admin_employee_registration_view,
+    logout_view
+)
+
+urlpatterns = [
+    path(
+        "register/customer/form/",
+        customer_registration_view,
+        name="customer-registration-form"
+    ),
+    path(
+        "login/form/",
+        login_view,
+        name="login-form"
+    ),
+    path(
+        "customer/profile/",
+        customer_profile_view,
+        name="customer-profile"
+    ),    path(
+        "customer/profile/",
+        customer_profile_view,
+        name="customer-profile"
+    ),
+    path(
+        "customer/profile/update/",
+        customer_profile_update_view,
+        name="customer-profile-update"
+    ),
+    path(
+        "user/change-password/",
+        password_change_view,
+        name="user-change-password"
+    ),
+    path(
+        "employee/profile/",
+        employee_profile_view,
+        name="employee-profile"
+    ),
+    path(
+        "employee/list/",
+        employee_list_view,
+        name="employee-list-template"
+    ),
+    path(
+        "employee/update/<int:pk>/",
+        admin_employee_update_view,
+        name="admin-employee-update-template"
+    ),
+    path(
+        "employee/admin/employees/<int:pk>/employment-status/update/",
+        admin_employee_employment_status_update_view,
+        name="admin-employee-employment-status-update-template"
+    ),
+    path(
+        "employee/admin/employees/register/",
+        admin_employee_registration_view,
+        name="admin-employee-registration-template"
+    ),
+    path(
+        "logout/",
+        logout_view,
+        name="logout"
+        ),
+    path(
+        "customer/list/",
+        customer_list_view,
+        name="customer-list-template"
+    ),
+]
