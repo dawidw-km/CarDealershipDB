@@ -1,0 +1,60 @@
+from django.urls import path
+from cars.views.api_views import (
+    CarRegistrationView,
+    CarDetailUpdateView,
+    AllCarsDetailView,
+    CarSoftDeleteView,
+    CarModerationStatusUpdateViewApproved,
+    CarModerationStatusUpdateViewRejected,
+    CarPurchaseStatusUpdateViewReserved,
+    OwnerOrStaffOrSuperuserAllCarsDetailView,
+    CarDetailForSoftDeleteView,
+)
+
+urlpatterns = [
+    path(
+        "register/car/",
+        CarRegistrationView.as_view(),
+        name="car-registration"
+        ),
+    path(
+        "cars/<int:pk>/update/",
+        CarDetailUpdateView.as_view(),
+        name="car-detail-update"
+        ),
+    path(
+        "cars/not-approved/<int:pk>/",
+        OwnerOrStaffOrSuperuserAllCarsDetailView.as_view(),
+        name="car-detail-not-approved"
+        ),
+    path(
+        "cars/approved/<int:pk>/",
+        AllCarsDetailView.as_view(),
+        name="car-detail-approved"
+        ),
+    path(
+        "cars/soft-deleted/<int:pk>/",
+        CarDetailForSoftDeleteView.as_view(),
+        name="car-detail-soft-deleted"
+        ),
+    path(
+        "cars/soft-delete/<int:pk>/",
+        CarSoftDeleteView.as_view(),
+        name="car-soft-delete"
+        ),
+    path(
+        "cars/<int:pk>/moderation-status/approved/",
+        CarModerationStatusUpdateViewApproved.as_view(),
+        name="car-moderation-status-update-approved"
+        ),
+    path(
+        "cars/<int:pk>/moderation-status/rejected/",
+        CarModerationStatusUpdateViewRejected.as_view(),
+        name="car-moderation-status-update-rejected"
+        ),
+    path(
+        "cars/<int:pk>/purchase-status/reserved/",
+        CarPurchaseStatusUpdateViewReserved.as_view(),
+        name="car-purchase-status-update-reserved"
+        ),
+]

@@ -29,10 +29,6 @@ urlpatterns = [
         "customer/profile/",
         customer_profile_view,
         name="customer-profile"
-    ),    path(
-        "customer/profile/",
-        customer_profile_view,
-        name="customer-profile"
     ),
     path(
         "customer/profile/update/",
