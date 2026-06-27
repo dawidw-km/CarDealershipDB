@@ -1,9 +1,20 @@
-from django.core.management.base import BaseCommand
-from datetime import date
 import factory
 import random
+from django.core.management.base import BaseCommand
+from datetime import date
 from django.contrib.auth import get_user_model
 from person.models import Customer, Employee
+from cars.models import (
+    Car,
+    VehicleType,
+    FuelType,
+    Transmission,
+    VehicleCondition,
+    AccidentStatus,
+    Status,
+    ModerationStatus,
+)
+from cars.tests.helpers import TestHelpers
 
 User = get_user_model()
 
@@ -18,7 +29,6 @@ employee_worker_password = "Worker123"
 #EMPLOYEE ADMIN DATA
 employee_admin_email = "admin@employee.com"
 employee_admin_password = "Admin123"
-
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -41,7 +51,74 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     address = factory.Faker('address', locale='pl_PL')
     date_of_birth = factory.Faker('date_of_birth', minimum_age=18, maximum_age=100)
 
-class Command(BaseCommand):
+class EmployeeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Employee
+
+    user = factory.SubFactory(UserFactory)
+    first_name = factory.Faker('first_name', locale='pl_PL')
+    last_name = factory.Faker('last_name', locale='pl_PL')
+    email = factory.LazyAttribute(lambda obj: obj.user.email)
+    phone_number = factory.LazyFunction(lambda: f"+48{random.randint(100000000, 999999999)}")
+    role = factory.Iterator([Employee.EmployeeRole.WORKER, Employee.EmployeeRole.ADMIN])
+    salary = factory.Faker('pydecimal', left_digits=5, right_digits=2, positive=True)
+    hire_date = factory.Faker('date_this_decade', before_today=True, after_today=False)
+
+
+BRANDS = [
+    "Toyota", "BMW", "Audi", "Ford",
+    "Volkswagen", "Skoda", "Mercedes", "Honda", "Nissan",
+    "Hyundai", "Kia", "Chevrolet", "Jeep", "Subaru", "Volvo",
+    "Land Rover", "Lexus", "Mazda", "Mercedes-Benz", "Mini",
+    "Mitsubishi", "Peugeot", "Renault", "Skoda",
+    "Suzuki", "Volkswagen"
+]
+MODELS = [
+    "Corolla", "X5", "A4", "Focus", "Golf", "Octavia",
+    "C-Class", "Civic", "Accord", "Camry", "Civic",
+    "Corolla", "Focus", "Golf", "Honda", "HR-V", "Insight"
+]
+
+class CarFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Car
+        abstract = True
+
+    owner = factory.SubFactory(CustomerFactory)
+    brand = factory.Iterator(BRANDS)
+    model = factory.Iterator(MODELS)
+    color = factory.Faker('color_name')
+    vehicle_type = factory.Iterator(VehicleType.values)
+    year = factory.Faker('random_int', min=1950, max=date.today().year)
+    vin = factory.Faker('vin')
+    fuel_type = factory.Iterator(FuelType.values)
+    transmission = factory.Iterator(Transmission.values)
+    listing_price = factory.Faker('pydecimal', left_digits=5, right_digits=2, positive=True)
+    description = factory.Faker('sentence')
+
+    @factory.post_generation
+    def run_full_clean(self, create, extracted, **kwargs):
+        if create:
+            self.full_clean()
+            self.save()
+
+class NewCarFactory(CarFactory):
+    vehicle_condition = VehicleCondition.NEW
+    accident_status = AccidentStatus.ACCIDENT_FREE
+    mileage = factory.Faker('random_int', min=0, max=100)
+
+class UsedCarFactory(CarFactory):
+    vehicle_condition = VehicleCondition.USED
+    accident_status = AccidentStatus.ACCIDENT_FREE
+    mileage = factory.Faker('random_int', min=100, max=2000000)
+
+class DamagedCarFactory(CarFactory):
+    vehicle_condition = VehicleCondition.FOR_PARTS
+    accident_status = AccidentStatus.DAMAGED
+    mileage = factory.Faker('random_int', min=5000, max=2000000)
+
+
+class Command(BaseCommand, TestHelpers):
     help = 'Seed demo data for the application'
 
     def create_fixed_customer(self):
@@ -127,3 +204,24 @@ class Command(BaseCommand):
         self.create_fixed_employee_admin()
         customers = CustomerFactory.create_batch(10)
         self.stdout.write(self.style.SUCCESS(f'Created {customers} customers'))
+        employees = EmployeeFactory.create_batch(10)
+        self.stdout.write(self.style.SUCCESS(f'Created {employees} employees'))
+        customer = list(Customer.objects.all())
+
+        new_cars = [NewCarFactory.create(
+            owner=random.choice(customers)
+            ) for _ in range(10)
+        ]
+        self.stdout.write(self.style.SUCCESS(f'Created {new_cars} new cars'))
+
+        used_cars = [UsedCarFactory.create(
+            owner=random.choice(customers)
+            ) for _ in range(10)
+        ]
+        self.stdout.write(self.style.SUCCESS(f'Created {used_cars} used cars'))
+
+        damaged_cars = [DamagedCarFactory.create(
+            owner=random.choice(customers)
+            ) for _ in range(10)
+        ]
+        self.stdout.write(self.style.SUCCESS(f'Created {damaged_cars} damaged cars'))
