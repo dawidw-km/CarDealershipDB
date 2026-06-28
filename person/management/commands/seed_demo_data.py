@@ -207,21 +207,35 @@ class Command(BaseCommand, TestHelpers):
         employees = EmployeeFactory.create_batch(10)
         self.stdout.write(self.style.SUCCESS(f'Created {employees} employees'))
         customer = list(Customer.objects.all())
+        employee = list(Employee.objects.all())
 
+        # Create new cars
         new_cars = [NewCarFactory.create(
             owner=random.choice(customers)
             ) for _ in range(10)
         ]
         self.stdout.write(self.style.SUCCESS(f'Created {new_cars} new cars'))
 
+        # Create used cars
         used_cars = [UsedCarFactory.create(
             owner=random.choice(customers)
             ) for _ in range(10)
         ]
         self.stdout.write(self.style.SUCCESS(f'Created {used_cars} used cars'))
 
+        # Create damaged cars
         damaged_cars = [DamagedCarFactory.create(
             owner=random.choice(customers)
             ) for _ in range(10)
         ]
         self.stdout.write(self.style.SUCCESS(f'Created {damaged_cars} damaged cars'))
+
+        # Approve cars by a random employee
+        reviewer = random.choice(employees)
+        approved_cars = [self.mark_car_as_approved(
+            NewCarFactory.create(
+                owner=random.choice(customers)),
+                reviewer
+            ) for _ in range(10)
+        ]
+        self.stdout.write(self.style.SUCCESS(f'Created {approved_cars} approved cars'))
