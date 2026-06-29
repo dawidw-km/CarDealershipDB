@@ -1,9 +1,11 @@
 import factory
 import random
+import uuid
 from django.core.management.base import BaseCommand
 from datetime import date
 from django.contrib.auth import get_user_model
 from person.models import Customer, Employee
+from sales.models import Sale
 from cars.models import (
     Car,
     VehicleType,
@@ -117,6 +119,21 @@ class DamagedCarFactory(CarFactory):
     accident_status = AccidentStatus.DAMAGED
     mileage = factory.Faker('random_int', min=5000, max=2000000)
 
+class SaleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Sale
+    
+    buyer = factory.SubFactory(CustomerFactory)
+    seller = factory.SubFactory(CustomerFactory)
+    car = factory.SubFactory(CarFactory)
+    sale_price = factory.LazyAttribute(lambda obj: obj.car.listing_price)
+    payment_method = factory.Iterator(Sale.PaymentMethod.values)
+
+    @factory.post_generation
+    def run_full_clean(self, create, extracted, **kwargs):
+        if create:
+            self.full_clean()
+            self.save()
 
 class Command(BaseCommand, TestHelpers):
     help = 'Seed demo data for the application'
@@ -239,3 +256,18 @@ class Command(BaseCommand, TestHelpers):
             ) for _ in range(10)
         ]
         self.stdout.write(self.style.SUCCESS(f'Created {approved_cars} approved cars'))
+
+        # Create sales
+        buyer = random.choice(customers)
+        seller = random.choice(customers)
+        car = random.choice(approved_cars)
+        sales = [SaleFactory.create(
+            buyer=buyer,
+            seller=seller,
+            car=car,
+            sale_price=car.listing_price,
+            transaction_number=uuid.uuid4().hex,
+            payment_method=random.choice(Sale.PaymentMethod.values)
+        ) for _ in range(10)
+        ]
+        self.stdout.write(self.style.SUCCESS(f'Created {sales} sales'))
