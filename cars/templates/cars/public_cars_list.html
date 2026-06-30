@@ -19,6 +19,10 @@
             <th>Owner</th>
             {% if request.user.is_superuser %}
             <th>Remove a car</th>
+            {% elif request.user.employee_profile %}
+                {% if request.user.employee_profile.role == 'admin' %}
+            <th>Remove a car</th>
+                {% endif %}
             {% endif %}
             {% if request.user.customer_profile %}
             <th>Buy a car</th>
@@ -49,6 +53,15 @@
                         <button type="submit">Soft delete car</button>
                     </form>
                 </td>
+                {% elif request.user.employee_profile %}
+                    {% if request.user.employee_profile.role == 'admin' %}
+                    <td>
+                        <form method="post" action="{% url 'employee-car-action-update-softdelete-template' car.id %}">
+                        {% csrf_token %}
+                            <button type="submit">Soft delete car</button>
+                        </form>
+                    </td>
+                    {% endif %}
                 {% endif %}
                 {% if request.user.customer_profile %}
                 <td>
@@ -63,9 +76,6 @@
 {% if request.user.customer_profile %}
     <a href="{% url 'customer-profile' %}"><button>My Profile</button></a>
 {% endif %}
-{% if request.user.employee_profile %}
-    <a href="{% url 'employee-profile' %}"><button>My Profile</button></a>
-{% endif %}
-{% if request.user.is_superuser %}
+{% if request.user.employee_profile or request.user.is_superuser %}
     <a href="{% url 'employee-profile' %}"><button>My Profile</button></a>
 {% endif %}

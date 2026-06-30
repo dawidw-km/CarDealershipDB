@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from person.models import Employee
 from cars.serializers import (
     CarRegistrationSerializer,
     ModerationStatusUpdateSerializerApproved,
@@ -195,7 +196,10 @@ def owner_and_staff_car_soft_delete_view(request, pk):
     """
 
     if hasattr(request.user, 'employee_profile'):
-        raise PermissionDenied("Employees are not allowed to soft delete cars.")
+        if request.user.employee_profile.role == Employee.EmployeeRole.WORKER:
+            raise PermissionDenied("Workers are not allowed to soft delete cars.")
+        if request.user.employee_profile.employment_status != Employee.EmploymentStatus.ACTIVE:
+            raise PermissionDenied("Inactive employees are not allowed to soft delete cars.")
 
     try:
         car = Car.objects.get(pk=pk)
@@ -208,7 +212,7 @@ def owner_and_staff_car_soft_delete_view(request, pk):
     if car.status == Status.RESERVED or car.status == Status.SOLD:
             raise PermissionDenied("You cannot soft delete a car that is reserved or sold.")
         
-    if not request.user.is_superuser:
+    if not request.user.is_superuser and not hasattr(request.user, 'employee_profile'):
         if car.owner != request.user.customer_profile:
             raise PermissionDenied("You cannot soft delete a car that you do not own.")
 
@@ -224,35 +228,22 @@ def owner_and_staff_car_soft_delete_view(request, pk):
                 return redirect("owner-cars-list-template")
             elif request.user.is_superuser:
                 return redirect("public-car-list-template")
-        
-        if hasattr(request.user, 'customer_profile'):
-            return render(
-                request,
-                "cars/owner_car_soft_delete.html",
-                {
-                    "car": car,
-                    "errors": serializer.errors
-                }
-            )
-        elif request.user.is_superuser:
-            return render(
-                request,
-                "cars/public_cars_list.html",
-                {
-                    "car": car,
-                    "errors": serializer.errors
-                }
-            )
-        else:
-            return redirect("login-form")
+            elif hasattr(request.user, 'employee_profile'):
+                return redirect("public-car-list-template")
             
     if hasattr(request.user, 'customer_profile'):
         return render(
             request,
-            "cars/owner_car_soft_delete.html",
+            "cars/owner_cars_list.html",
             {"car": car}
         )
     elif request.user.is_superuser:
+        return render(
+            request,
+            "cars/public_cars_list.html",
+            {"car": car}
+        )
+    elif hasattr(request.user, 'employee_profile'):
         return render(
             request,
             "cars/public_cars_list.html",

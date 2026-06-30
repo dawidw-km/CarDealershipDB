@@ -59,7 +59,7 @@ docker compose exec web python manage.py seed_demo_data
 | `/docs/`        | Swagger UI (interactive API documentation) |
 | `/docs/schema/` | OpenAPI schema                             |
 | `/admin/`       | Django admin panel                         |
-| `/api-auth/`    | DRF browsable API session login            |
+| `/api/api-auth/` | DRF browsable API session login            |
 
 
 
@@ -83,30 +83,32 @@ After logging in, users are redirected to their profile page (`/customer/profile
 **Customer pages**
 
 
-| URL                         | Description                    |
-| --------------------------- | ------------------------------ |
-| `/customer/profile/`        | Customer dashboard             |
-| `/customer/profile/update/` | Update profile                 |
-| `/me/cars/`                 | View own car listings          |
-| `/customer/car/register/`   | Register a new car             |
-| `/me/cars/update/<id>/`     | Update a car listing           |
-| `/buyer/sales/`             | Sales where you are the buyer  |
-| `/owner/sales/`             | Sales where you are the seller |
-| `/user/change-password/`    | Change password                |
+| URL                             | Description                                             |
+| ------------------------------- | ------------------------------------------------------- |
+| `/customer/profile/`            | Customer dashboard                                      |
+| `/customer/profile/update/`     | Update profile                                          |
+| `/me/cars/`                     | View own car listings (soft-delete own cars via button) |
+| `/customer/car/register/`       | Register a new car                                      |
+| `/me/cars/update/<id>/`         | Update a car listing                                    |
+| `/customer/sale/register/<id>/` | Purchase a car (template UI)                          |
+| `/buyer/sales/`                 | Sales where you are the buyer                           |
+| `/owner/sales/`                 | Sales where you are the seller                          |
+| `/user/change-password/`        | Change password                                         |
 
 
 **Employee pages**
 
 
-| URL                                   | Description                          |
-| ------------------------------------- | ------------------------------------ |
-| `/employee/profile/`                  | Employee dashboard                   |
-| `/employee/car/moderation/list/`      | Cars pending moderation              |
-| `/employee/deleted/cars/`             | Soft-deleted cars                    |
-| `/customer/list/`                     | Customer list                        |
-| `/staff/sales/`                       | All sales transactions               |
-| `/employee/list/`                     | Employee list (admin only)           |
-| `/employee/admin/employees/register/` | Register a new employee (admin only) |
+| URL                                   | Description                                         |
+| ------------------------------------- | --------------------------------------------------- |
+| `/employee/profile/`                  | Employee dashboard                                  |
+| `/employee/car/moderation/list/`      | Cars pending moderation                             |
+| `/employee/deleted/cars/`             | Soft-deleted cars                                   |
+| `/customer/list/`                     | Customer list                                       |
+| `/staff/sales/`                       | All sales transactions                              |
+| `/employee/list/`                     | Employee list (admin only)                          |
+| `/employee/admin/employees/register/` | Register a new employee (admin only)                |
+| `/public/cars/`                       | Soft-delete cars (admin employee or superuser only) |
 
 
 Use the demo accounts above to explore each role. Log out via `/logout/`.
@@ -121,7 +123,8 @@ The system has two main user types: **Customer** and **Employee**. Employees are
 - View and update own profile
 - Register, view, update, and soft-delete own car listings
 - Browse approved car listings
-- Reserve or purchase cars
+- Reserve cars via API (`PATCH /api/cars/<id>/purchase-status/reserved/`) — template UI not implemented yet
+- Purchase cars via API or template UI (`/customer/sale/register/<id>/`)
 - View own sales as buyer or seller
 - Change password
 
@@ -131,9 +134,9 @@ The system has two main user types: **Customer** and **Employee**. Employees are
 
 - View own profile
 - Approve or reject customer car listings
-- Soft-delete cars
 - View rejected, soft-deleted, and pending cars
 - View customer list and all sales transactions
+- Cannot soft-delete cars
 - Change password
 
 
@@ -144,6 +147,7 @@ Everything a worker can do, plus:
 
 - Register new employees
 - View employee list
+- Soft-delete any car listing (not reserved or sold) via `/public/cars/`
 - Update employee profiles
 - Change employee employment status (active / inactive)
 

@@ -2,13 +2,13 @@ from rest_framework.permissions import BasePermission
 from person.models import Employee
 from .models import Status
 
-class CannotDeleteSoldCar(BasePermission):
+class CannotDeleteSoldOrReservedCar(BasePermission):
     """
-    Custom permission preventing deletion of sold cars.
+    Custom permission preventing deletion of sold or reserved cars.
     """
     def has_object_permission(self, request, view, obj):
         if request.method in ['PUT', 'PATCH']:
-            return obj.status != Status.SOLD
+            return obj.status not in [Status.SOLD, Status.RESERVED]
         return True
     
 
@@ -42,20 +42,28 @@ class CanChangeCarModerationStatus(BasePermission):
         return True
 
 
-class IsCarOwnerOrSuperuser(BasePermission):
+class IsCarOwnerOrSuperuserOrEmployeeAdmin(BasePermission):
     """
     Customers can access only their own cars.
     Superusers have full access to all cars.
+    Admin employees have full access to all cars.
     """
     def has_object_permission(self, request, view, obj):
 
         if request.user.is_superuser:
             return True
 
-        return(
-            hasattr(request.user, 'customer_profile') and 
-            obj.owner == request.user.customer_profile
-        )
+        if hasattr(request.user, 'customer_profile'):
+            return(
+                obj.owner == request.user.customer_profile
+            )
+        else:
+            if hasattr(request.user, 'employee_profile'):
+                if request.user.employee_profile.employment_status != Employee.EmploymentStatus.ACTIVE:
+                    return False
+                return request.user.employee_profile.role == Employee.EmployeeRole.ADMIN
+            else:
+                return False
 
 class IsCarOwner(BasePermission):
     """

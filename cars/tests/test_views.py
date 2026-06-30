@@ -625,6 +625,38 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_admin_employee_can_soft_delete_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_admin("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.put(
+            reverse("car-soft-delete", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, True)
+
+    def test_inactive_admin_employee_cannot_soft_delete_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        employee = self.create_employee_admin("testuser2@gmail.com")
+        employee = self.mark_employee_as_inactive(employee)
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.put(
+            reverse("car-soft-delete", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
 
     def test_superuser_cannot_update_car_that_belongs_to_owner(self):
         customer = self.create_customer("testuser1@gmail.com")

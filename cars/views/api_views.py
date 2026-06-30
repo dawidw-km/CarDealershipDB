@@ -13,9 +13,9 @@ from cars.serializers import (
 )
 from person.permissions import IsCustomer
 from cars.permissions import (
-    IsCarOwnerOrSuperuser,
+    IsCarOwnerOrSuperuserOrEmployeeAdmin,
     CanChangeCarModerationStatus,
-    CannotDeleteSoldCar,
+    CannotDeleteSoldOrReservedCar,
     CannotModifySoldOrReservedCar,
     CanViewOwnOrStaffCar,
     CannotBeCarOwner,
@@ -92,10 +92,11 @@ class CarSoftDeleteView(generics.UpdateAPIView):
     """
     Allow customer to soft delete their own car.
     Allow superuser to soft delete any car.
+    Allow admin employees to soft delete any car.
     """
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarSoftDeleteSerializer
-    permission_classes = [IsAuthenticated, IsCarOwnerOrSuperuser, CannotDeleteSoldCar]
+    permission_classes = [IsAuthenticated, IsCarOwnerOrSuperuserOrEmployeeAdmin, CannotDeleteSoldOrReservedCar]
 
 @extend_schema(tags=["Cars - Staff"])
 class CarModerationStatusUpdateViewApproved(generics.UpdateAPIView):

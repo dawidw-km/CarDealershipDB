@@ -970,3 +970,86 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         self.assertRedirects(response,
         login_url+"?next="+next_url
         )
+    
+    def test_admin_employee_can_soft_delete_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        employee = self.create_employee_admin("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template", args=[car.id]),
+            {}
+        )
+        self.assertRedirects(response, reverse("public-car-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, True)
+    
+    def test_admin_employee_cannot_soft_delete_a_car_that_is_reserved(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        employee = self.create_employee_admin("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template", args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertTrue(car.buyer is not None)
+
+    def test_admin_employee_cannot_soft_delete_a_car_that_is_sold(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car)
+
+        employee = self.create_employee_admin("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template", args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertTrue(car.buyer is not None)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
+
+    def test_worker_employee_cannot_soft_delete_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("employee-car-action-update-softdelete-template", args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.is_deleted, False)
+        self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
+        self.assertTrue(car.reviewer is not None)
