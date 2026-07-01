@@ -722,3 +722,21 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         self.assertEqual(car.description, "This is a new car")
         self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
         self.assertFalse(car.reviewer is None)
+    
+    def test_customer_cannot_reserve_sold_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        buyer = self.create_customer("testuser2@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car, buyer=buyer)
+        reserver = self.create_customer("testuser3@gmail.com")
+        self.client.force_authenticate(user=reserver.user)
+        response = self.client.put(
+            reverse("car-purchase-status-update-reserved", args=[car.id]),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.SOLD)
+        self.assertEqual(car.buyer, buyer)

@@ -10,6 +10,8 @@ from ..serializers import (
     CarSoftDeleteSerializer,
     CarPurchaseStatusUpdateSerializerReserved
 )
+from sales.serializers import SaleRegistrationSerializer
+from sales.models import Sale
 from ..models import ModerationStatus, Status
 from person.models import Customer, Employee
 from django.contrib.auth import get_user_model
@@ -441,4 +443,42 @@ class CarRegistrationSerializerTestCase(TestCase):
         self.assertEqual(updated_car.buyer, buyer)
         self.assertEqual(updated_car.reviewer, employee)
 
-    
+    def test_car_cannot_be_reserved_if_sold(self):
+        customer = self.create_customer("testcustomer@example.com")
+        buyer = self.create_customer("testbuyer@example.com")
+        reserver = self.create_customer("testreserver@example.com")
+        employee = self.create_employee("testemployee@example.com")
+        car_serializer = self.create_valid_car_serializer()
+        car_serializer.is_valid(raise_exception=True)
+        car = car_serializer.save(owner=customer)
+
+        request = self.request_with_user(employee.user)
+        
+        serializer_approved = ModerationStatusUpdateSerializerApproved(car, context={"request": request}, data={})
+        serializer_approved.is_valid(raise_exception=True)
+        approved_car = serializer_approved.save()
+
+        request = self.request_with_user(buyer.user)
+        
+        serializer_sold = SaleRegistrationSerializer(
+            data={"payment_method": Sale.PaymentMethod.CARD},
+            context={"request": request, "car": approved_car},
+        )
+
+        serializer_sold.is_valid()
+        sold_car = serializer_sold.save()
+
+        approved_car.refresh_from_db()
+        self.assertEqual(approved_car.status, Status.SOLD)
+        self.assertEqual(approved_car.buyer, buyer)
+        
+        request = self.request_with_user(reserver.user)
+        
+        serializer_reserved = CarPurchaseStatusUpdateSerializerReserved(approved_car, context={"request": request}, data={})
+        with self.assertRaises(ValidationError):
+            serializer_reserved.is_valid(raise_exception=True)
+            serializer_reserved.save()
+
+        approved_car.refresh_from_db()
+        self.assertEqual(approved_car.status, Status.SOLD)
+        self.assertEqual(approved_car.buyer, buyer)

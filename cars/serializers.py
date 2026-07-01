@@ -278,7 +278,10 @@ class BaseCarPurchaseStatusUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Car is not approved.")
 
         if instance.status == Status.RESERVED and instance.buyer != buyer:
-            raise serializers.ValidationError("You are not authorized to purchase this car.")
+            raise serializers.ValidationError("Car is not available for reservation.")
+        
+        if instance.status == Status.SOLD:
+            raise serializers.ValidationError("Car is already sold.")
 
     def update(self, instance, validated_data):
 
