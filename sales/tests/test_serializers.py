@@ -1,5 +1,5 @@
 from django.test import TestCase
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound
 from ..serializers import SaleRegistrationSerializer
 from cars.tests.helpers import TestHelpers
 from sales.models import Sale
@@ -61,7 +61,7 @@ class SaleSerializerTestCase(TestCase, TestHelpers):
         )
         
         serializer.is_valid()
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(NotFound):
             serializer.save()
 
     def test_ensure_car_status_and_buyer_are_updated(self):
