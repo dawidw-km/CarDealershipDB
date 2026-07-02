@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from cars.models import Car, ModerationStatus
+from cars.models import Car, ModerationStatus, Status
 from cars.serializers import (
     CarRegistrationSerializer,
     CarDetailUpdateSerializer,
@@ -84,6 +84,15 @@ class AllCarsDetailView(generics.RetrieveAPIView):
     Allow all users to retrieve details of any car.
     """
     queryset = Car.objects.filter(is_deleted=False, moderation_status=ModerationStatus.APPROVED)
+    serializer_class = CarDetailSerializer
+    permission_classes = [AllowAny]
+
+@extend_schema(tags=["Cars - Details"])
+class AllApprovedAndAvailableCarsListView(generics.ListAPIView):
+    """
+    Allow all users to retrieve details of all approved and available cars.
+    """
+    queryset = Car.objects.filter(is_deleted=False, moderation_status=ModerationStatus.APPROVED, status=Status.AVAILABLE)
     serializer_class = CarDetailSerializer
     permission_classes = [AllowAny]
 

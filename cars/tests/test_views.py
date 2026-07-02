@@ -740,3 +740,41 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         car.refresh_from_db()
         self.assertEqual(car.status, Status.SOLD)
         self.assertEqual(car.buyer, buyer)
+
+    def test_anonymous_user_can_view_all_approved_and_available_cars(self):
+
+        response = self.client.get(
+            reverse("all-approved-and-available-cars"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_sold_cars_cannot_be_viewed_in_all_approved_and_available_cars_list(self):
+
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_sold(car)
+
+        response = self.client.get(
+            reverse("all-approved-and-available-cars"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)
+
+
+    def test_approved_and_available_cars_are_viewed_in_all_approved_and_available_cars_list(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        response = self.client.get(
+            reverse("all-approved-and-available-cars"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)

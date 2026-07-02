@@ -9,6 +9,7 @@ from cars.views.api_views import (
     CarPurchaseStatusUpdateViewReserved,
     OwnerOrStaffOrSuperuserAllCarsDetailView,
     CarDetailForSoftDeleteView,
+    AllApprovedAndAvailableCarsListView,
 )
 
 urlpatterns = [
@@ -56,5 +57,10 @@ urlpatterns = [
         "cars/<int:pk>/purchase-status/reserved/",
         CarPurchaseStatusUpdateViewReserved.as_view(),
         name="car-purchase-status-update-reserved"
+        ),
+    path(
+        "cars/approved-and-available/list/",
+        AllApprovedAndAvailableCarsListView.as_view(),
+        name="all-approved-and-available-cars"
         ),
 ]
