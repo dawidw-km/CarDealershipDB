@@ -1053,3 +1053,82 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         self.assertEqual(car.is_deleted, False)
         self.assertEqual(car.moderation_status, ModerationStatus.APPROVED)
         self.assertTrue(car.reviewer is not None)
+
+    def test_customer_can_reserve_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        buyer = self.create_customer("testuser2@gmail.com")
+
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("customer-car-reservation-template", args=[car.id]),
+            {}
+        )
+
+        self.assertRedirects(response, reverse("public-car-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertEqual(car.buyer, buyer)
+
+    def test_owner_cannot_reserve_own_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.post(
+            reverse("customer-car-reservation-template", args=[car.id]),
+            {}
+        )
+        self.assertEqual(response.status_code, 403)
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.AVAILABLE)
+        self.assertTrue(car.buyer is None)
+
+    def test_customer_cannot_reserve_a_car_that_is_not_available(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        reserver = self.create_customer("testuser@gmail.com")
+        car = self.mark_car_as_reserved(car, reserver)
+        buyer = self.create_customer("testuser2@gmail.com")
+
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+
+        response = self.client.post(
+            reverse("customer-car-reservation-template", args=[car.id]),
+            {}
+        )
+
+        self.assertRedirects(response, reverse("public-car-list-template"))
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.RESERVED)
+        self.assertEqual(car.buyer, reserver)
+    
+    def test_anonymous_user_cannot_reserve_a_car(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        login_url = reverse("login-form")
+        next_url = reverse("customer-car-reservation-template", args=[car.id])
+
+        response = self.client.post(
+            reverse("customer-car-reservation-template", args=[car.id]),
+            {}
+        )
+
+        self.assertRedirects(response, login_url+"?next="+next_url)
+        car.refresh_from_db()
+        self.assertEqual(car.status, Status.AVAILABLE)
+        self.assertTrue(car.buyer is None)

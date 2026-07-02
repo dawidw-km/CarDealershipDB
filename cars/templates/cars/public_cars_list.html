@@ -25,6 +25,9 @@
                 {% endif %}
             {% endif %}
             {% if request.user.customer_profile %}
+            <th>Reserve a car</th>
+            {% endif %}
+            {% if request.user.customer_profile %}
             <th>Buy a car</th>
             {% endif %}
         </tr>
@@ -62,6 +65,14 @@
                         </form>
                     </td>
                     {% endif %}
+                {% endif %}
+                {% if request.user.customer_profile %}
+                <td>
+                    <form method="post" action="{% url 'customer-car-reservation-template' car.id %}">
+                    {% csrf_token %}
+                        <button type="submit">Reserve a car</button>
+                    </form>
+                </td>
                 {% endif %}
                 {% if request.user.customer_profile %}
                 <td>

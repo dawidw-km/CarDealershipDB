@@ -8,7 +8,8 @@ from cars.views.template_views import (
     employee_car_moderation_update_approved_view,
     employee_car_moderation_update_rejected_view,
     owner_car_update_view,
-    owner_and_staff_car_soft_delete_view
+    owner_and_staff_car_soft_delete_view,
+    car_reservation_view
 )
 
 urlpatterns = [
@@ -61,5 +62,10 @@ urlpatterns = [
         "me/cars/update/<int:pk>/",
         owner_car_update_view,
         name="owner-car-update-template"
+    ),
+    path(
+        "customer/car/reservation/<int:pk>/",
+        car_reservation_view,
+        name="customer-car-reservation-template"
     ),
 ]

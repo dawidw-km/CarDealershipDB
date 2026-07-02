@@ -7,7 +7,8 @@ from cars.serializers import (
     ModerationStatusUpdateSerializerApproved,
     ModerationStatusUpdateSerializerRejected,
     CarDetailUpdateSerializer,
-    CarSoftDeleteSerializer
+    CarSoftDeleteSerializer,
+    CarPurchaseStatusUpdateSerializerReserved
 )
 from cars.models import (
     Car,
@@ -306,3 +307,39 @@ def owner_car_update_view(request, pk):
             "car_text_choices": car_text_choices,
         }
     )
+
+@login_required(login_url="login-form")
+def car_reservation_view(request, pk):
+    """
+    Render a form to reserve a car.
+    """
+    try:
+        car = Car.objects.get(
+            pk=pk,
+            status=Status.AVAILABLE,
+            is_deleted=False,
+            moderation_status=ModerationStatus.APPROVED
+            )
+    except Car.DoesNotExist:
+        return redirect("public-car-list-template")
+
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied("You must be a customer to reserve a car.")
+    
+    if car.owner == request.user.customer_profile:
+        raise PermissionDenied("You cannot reserve a car that you own.")
+    
+    if car.status == Status.RESERVED or car.status == Status.SOLD:
+        raise PermissionDenied("You cannot reserve a car that is reserved or sold.")
+    
+    if request.method == 'POST':
+        serializer = CarPurchaseStatusUpdateSerializerReserved(
+            car,
+            data=request.POST,
+            context={"request": request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("public-car-list-template")
+        
+    return redirect("public-car-list-template")
