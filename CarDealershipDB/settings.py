@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'cars',
     'person',
     'sales',
-    'scheduling',
 ]
 
 MIDDLEWARE = [

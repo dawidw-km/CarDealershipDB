@@ -36,8 +36,6 @@ docker compose exec web python manage.py seed_superuser
 docker compose exec web python manage.py seed_demo_data
 ```
 
-
-
 ### Demo accounts
 
 
@@ -173,20 +171,7 @@ CarDealershipDB/   # project settings, API routing, docs
 person/            # customers, employees, authentication
 cars/              # car listings, moderation, soft delete
 sales/             # purchase transactions
-scheduling/        # service appointments (work in progress)
 ```
-
-
-
-## Roadmap
-
-- [x] Customer and employee management
-- [x] Car listings with employee moderation
-- [x] Car reservation and sales flow
-- [x] REST API with Swagger documentation
-- [x] Django template frontend
-- [ ] Scheduling module (still in development)
-
 
 
 ## Running tests
@@ -199,4 +184,4 @@ docker compose exec web python manage.py test
 
 ## About
 
-Personal portfolio project built to practice Django, REST API design, role-based access control, and domain validation. Core features are complete. Scheduling is still in development.
+Personal portfolio project built to practice Django, REST API design, role-based access control, and domain validation. Core features are complete.
