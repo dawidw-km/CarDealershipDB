@@ -778,3 +778,158 @@ class CarViewsTestCase(APITestCase, TestHelpers):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_anonymous_user_cannot_view_owner_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        response = self.client.get(
+            reverse("owner-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_owner_can_view_own_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        self.client.force_authenticate(user=customer.user)
+        response = self.client.get(
+            reverse("owner-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_other_customer_cannot_view_owner_reserved_cars(self):
+        customer_owner = self.create_customer("testuser1@gmail.com")
+        customer_not_owner = self.create_customer("testuser_not_owner@gmail.com")
+        car = self.create_car(owner=customer_owner)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        self.client.force_authenticate(user=customer_not_owner.user)
+        response = self.client.get(
+            reverse("owner-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)
+
+    def test_anonymous_user_cannot_view_buyer_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        response = self.client.get(
+            reverse("buyer-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_buyer_can_view_own_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        buyer = self.create_customer("testuser2@gmail.com")
+        car = self.mark_car_as_reserved(car, buyer=buyer)
+        self.client.force_authenticate(user=buyer.user)
+        response = self.client.get(
+            reverse("buyer-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+    
+    def test_another_user_cannot_view_buyer_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        buyer = self.create_customer("testuser2@gmail.com")
+        car = self.mark_car_as_reserved(car, buyer=buyer)
+        another_user = self.create_customer("testuser3@gmail.com")
+        self.client.force_authenticate(user=another_user.user)
+        response = self.client.get(
+            reverse("buyer-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)
+
+    def test_anonymous_user_cannot_view_staff_or_superuser_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        response = self.client.get(
+            reverse("staff-or-superuser-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_not_employee_or_superuser_cannot_view_staff_or_superuser_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        non_staff_user = self.create_customer("not_employee_or_superuser@gmail.com")
+        self.client.force_authenticate(user=non_staff_user.user)
+        response = self.client.get(
+            reverse("staff-or-superuser-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    
+    def test_employee_can_view_staff_or_superuser_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get(
+            reverse("staff-or-superuser-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+    
+    def test_superuser_can_view_staff_or_superuser_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        superuser = self.create_superuser("testuser2@gmail.com")
+        self.client.force_authenticate(user=superuser)
+        response = self.client.get(
+            reverse("staff-or-superuser-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+    
+    def test_inactive_employee_cannot_view_staff_or_superuser_reserved_cars(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        employee = self.mark_employee_as_inactive(employee)
+        self.client.force_authenticate(user=employee.user)
+        response = self.client.get(
+            reverse("staff-or-superuser-reserved-car-list"),
+            {},
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

@@ -68,6 +68,34 @@ class CarDetailSerializer(serializers.ModelSerializer):
 
         read_only_fields = fields
 
+class ReservedCarListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Car
+        fields = [
+            "id",
+            "owner",
+            "buyer",
+            "status",
+            "brand",
+            "model",
+            "color",
+            "vehicle_type",
+            "year",
+            "vin",
+            "mileage",
+            "fuel_type",
+            "transmission",
+            "vehicle_condition",
+            "accident_status",
+            "listing_price",
+            "description",
+            "created_at",
+            "moderation_status",
+            "reviewer",
+        ]
+
+        read_only_fields = fields
+
 class CarDetailUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car

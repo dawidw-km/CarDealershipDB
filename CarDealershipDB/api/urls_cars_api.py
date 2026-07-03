@@ -10,6 +10,9 @@ from cars.views.api_views import (
     OwnerOrStaffOrSuperuserAllCarsDetailView,
     CarDetailForSoftDeleteView,
     AllApprovedAndAvailableCarsListView,
+    OwnerReservedCarListView,
+    BuyerReservedCarListView,
+    StaffOrSuperuserReservedCarListView,
 )
 
 urlpatterns = [
@@ -62,5 +65,20 @@ urlpatterns = [
         "cars/approved-and-available/list/",
         AllApprovedAndAvailableCarsListView.as_view(),
         name="all-approved-and-available-cars"
+        ),
+    path(
+        "cars/owner/reserved/list/",
+        OwnerReservedCarListView.as_view(),
+        name="owner-reserved-car-list"
+        ),
+    path(
+        "cars/buyer/reserved/list/",
+        BuyerReservedCarListView.as_view(),
+        name="buyer-reserved-car-list"
+        ),
+    path(
+        "cars/staff-or-superuser/reserved/list/",
+        StaffOrSuperuserReservedCarListView.as_view(),
+        name="staff-or-superuser-reserved-car-list"
         ),
 ]

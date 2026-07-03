@@ -10,6 +10,7 @@ from cars.serializers import (
     ModerationStatusUpdateSerializerApproved,
     ModerationStatusUpdateSerializerRejected,
     CarPurchaseStatusUpdateSerializerReserved,
+    ReservedCarListSerializer,
 )
 from person.permissions import IsCustomer
 from cars.permissions import (
@@ -50,7 +51,6 @@ class CarRegistrationView(generics.CreateAPIView):
     """
     Allow authenticated customers to register a new car.
     """
-    queryset = Car.objects.all()
     serializer_class = CarRegistrationSerializer
     permission_classes = [IsAuthenticated, IsCustomer]
 
@@ -77,6 +77,45 @@ class OwnerOrStaffOrSuperuserAllCarsDetailView(generics.RetrieveAPIView):
     queryset = Car.objects.filter(is_deleted=False)
     serializer_class = CarDetailSerializer
     permission_classes = [IsAuthenticated, CanViewOwnOrStaffCar]
+
+@extend_schema(tags=["Cars - Customer"])
+class OwnerReservedCarListView(generics.ListAPIView):
+    """
+    Allow owners to retrieve details of all their own cars that are reserved.
+    """
+    serializer_class = ReservedCarListSerializer
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def get_queryset(self):
+        return Car.objects.filter(
+            owner=self.request.user.customer_profile,
+            status=Status.RESERVED,
+            is_deleted=False
+        )
+
+@extend_schema(tags=["Cars - Customer"])
+class BuyerReservedCarListView(generics.ListAPIView):
+    """
+    Allow buyers to retrieve details of all cars that are reserved.
+    """
+    serializer_class = ReservedCarListSerializer
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def get_queryset(self):
+        return Car.objects.filter(
+            buyer=self.request.user.customer_profile,
+            status=Status.RESERVED,
+            is_deleted=False
+        )
+
+@extend_schema(tags=["Cars - Staff & Superuser"])
+class StaffOrSuperuserReservedCarListView(generics.ListAPIView):
+    """
+    Allow employees and superusers to retrieve details of all cars that are reserved.
+    """
+    queryset = Car.objects.filter(status=Status.RESERVED, is_deleted=False)
+    serializer_class = ReservedCarListSerializer
+    permission_classes = [IsAuthenticated, IsEmployeeActive]
 
 @extend_schema(tags=["Cars - Details"])
 class AllCarsDetailView(generics.RetrieveAPIView):
