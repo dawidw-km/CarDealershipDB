@@ -1132,3 +1132,55 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
         car.refresh_from_db()
         self.assertEqual(car.status, Status.AVAILABLE)
         self.assertTrue(car.buyer is None)
+
+    def test_employee_can_access_staff_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("staff-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/car_staff_reservation_list.html")
+
+    def test_non_employee_cannot_access_staff_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        user = self.create_user("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("staff-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTemplateNotUsed(response, "cars/car_staff_reservation_list.html")
+
+    def test_inactive_employee_cannot_access_staff_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        employee = self.create_employee_worker("testuser2@gmail.com")
+        employee = self.mark_employee_as_inactive(employee)
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("staff-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTemplateNotUsed(response, "cars/car_staff_reservation_list.html")

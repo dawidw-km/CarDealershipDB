@@ -1,0 +1,46 @@
+<h1>Reservation List</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Year</th>
+            <th>Vin</th>
+            <th>Mileage</th>
+            <th>Fuel Type</th>
+            <th>Transmission</th>
+            <th>Vehicle Condition</th>
+            <th>Accident Status</th>
+            <th>Listing Price</th>
+            <th>Description</th>
+            <th>Created At</th>
+            <th>Owner</th>
+            <th>Reserved by</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for car in cars %}
+            <tr>
+                <td>{{ car.brand }}</td>
+                <td>{{ car.model }}</td>
+                <td>{{ car.color }}</td>
+                <td>{{ car.year }}</td>
+                <td>{{ car.vin }}</td>
+                <td>{{ car.mileage }}</td>
+                <td>{{ car.fuel_type }}</td>
+                <td>{{ car.transmission }}</td>
+                <td>{{ car.vehicle_condition }}</td>
+                <td>{{ car.accident_status }}</td>
+                <td>{{ car.listing_price }}</td>
+                <td>{{ car.description }}</td>
+                <td>{{ car.created_at }}</td>
+                <td>{{ car.owner.first_name }} {{ car.owner.last_name }}</td>
+                <td>{{ car.buyer.first_name }} {{ car.buyer.last_name }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'employee-profile' %}">Back to Employee Profile</a>

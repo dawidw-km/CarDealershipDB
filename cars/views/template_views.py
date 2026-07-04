@@ -343,3 +343,22 @@ def car_reservation_view(request, pk):
             return redirect("public-car-list-template")
         
     return redirect("public-car-list-template")
+
+
+@login_required(login_url="login-form")
+@active_employee_required
+def car_staff_reservation_list_view(request):
+    """
+    Render a list of all cars that are reserved by the authenticated user.
+    """
+    cars = Car.objects.filter(
+        status=Status.RESERVED,
+        is_deleted=False
+        )
+
+    return render(
+        request,
+        "cars/car_staff_reservation_list.html",
+        {"cars": cars}
+    )
+    

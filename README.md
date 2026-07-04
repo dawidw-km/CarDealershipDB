@@ -102,6 +102,7 @@ After logging in, users are redirected to their profile page (`/customer/profile
 | ------------------------------------- | --------------------------------------------------- |
 | `/employee/profile/`                  | Employee dashboard                                  |
 | `/employee/car/moderation/list/`      | Cars pending moderation                             |
+| `/staff/car/reservation/list/`        | All reserved cars (employee or superuser)           |
 | `/employee/deleted/cars/`             | Soft-deleted cars                                   |
 | `/customer/list/`                     | Customer list                                       |
 | `/staff/sales/`                       | All sales transactions                              |
