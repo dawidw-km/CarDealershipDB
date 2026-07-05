@@ -358,7 +358,46 @@ def car_staff_reservation_list_view(request):
 
     return render(
         request,
-        "cars/car_staff_reservation_list.html",
+        "cars/car_reservation_list.html",
         {"cars": cars}
     )
     
+@login_required(login_url="login-form")
+def car_owner_reservation_list_view(request):
+    """
+    Render a list of reserved cars that are owned by the authenticated user.
+    """
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied("You must be a customer to view own reserved cars.")
+
+    cars = Car.objects.filter(
+        owner=request.user.customer_profile,
+        status=Status.RESERVED,
+        is_deleted=False
+    )
+
+    return render(
+        request,
+        "cars/car_reservation_list.html",
+        {"cars": cars}
+    )
+
+@login_required(login_url="login-form")
+def car_buyer_reservation_list_view(request):
+    """
+    Render a list of reserved cars that are owned by the authenticated user.
+    """
+    if not hasattr(request.user, 'customer_profile'):
+        raise PermissionDenied("You must be a customer to view your reserved cars.")
+
+    cars = Car.objects.filter(
+        buyer=request.user.customer_profile,
+        status=Status.RESERVED,
+        is_deleted=False
+    )
+
+    return render(
+        request,
+        "cars/car_reservation_list.html",
+        {"cars": cars}
+    )

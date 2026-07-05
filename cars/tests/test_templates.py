@@ -1148,7 +1148,7 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
             reverse("staff-car-reservation-list-template"),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "cars/car_staff_reservation_list.html")
+        self.assertTemplateUsed(response, "cars/car_reservation_list.html")
 
     def test_non_employee_cannot_access_staff_car_reservation_list_view(self):
         customer = self.create_customer("testuser1@gmail.com")
@@ -1165,7 +1165,6 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
             reverse("staff-car-reservation-list-template"),
         )
         self.assertEqual(response.status_code, 403)
-        self.assertTemplateNotUsed(response, "cars/car_staff_reservation_list.html")
 
     def test_inactive_employee_cannot_access_staff_car_reservation_list_view(self):
         customer = self.create_customer("testuser1@gmail.com")
@@ -1183,4 +1182,76 @@ class CarTemplateViewsTestCase(TestCase, TestHelpers):
             reverse("staff-car-reservation-list-template"),
         )
         self.assertEqual(response.status_code, 403)
-        self.assertTemplateNotUsed(response, "cars/car_staff_reservation_list.html")
+
+    def test_owner_can_access_owner_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        self.client.login(
+            username="testuser1@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("owner-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/car_reservation_list.html")
+
+
+    def test_non_owner_cannot_access_owner_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+
+        user = self.create_customer("testuser2@gmail.com")
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("owner-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/car_reservation_list.html")
+        self.assertFalse(response.context['cars'].exists())
+
+    def test_buyer_can_access_buyer_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+        car = self.mark_car_as_reserved(car)
+        buyer = self.create_customer("testuser2@gmail.com")
+
+        self.client.login(
+            username="testuser2@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("buyer-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/car_reservation_list.html")
+
+    def test_non_buyer_cannot_access_buyer_car_reservation_list_view(self):
+        customer = self.create_customer("testuser1@gmail.com")
+        car = self.create_car(owner=customer)
+        car = self.mark_car_as_approved(car)
+
+        buyer = self.create_customer("testuser2@gmail.com")
+        car = self.mark_car_as_reserved(car, buyer)
+
+        non_buyer = self.create_customer("testuser3@gmail.com")
+
+        self.client.login(
+            username="testuser3@gmail.com",
+            password="testpass123"
+        )
+        response = self.client.get(
+            reverse("buyer-car-reservation-list-template"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "cars/car_reservation_list.html")
+        self.assertFalse(response.context['cars'].exists())

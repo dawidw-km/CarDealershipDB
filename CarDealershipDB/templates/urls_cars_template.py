@@ -10,7 +10,9 @@ from cars.views.template_views import (
     owner_car_update_view,
     owner_and_staff_car_soft_delete_view,
     car_reservation_view,
-    car_staff_reservation_list_view
+    car_staff_reservation_list_view,
+    car_owner_reservation_list_view,
+    car_buyer_reservation_list_view
 )
 
 urlpatterns = [
@@ -73,5 +75,15 @@ urlpatterns = [
         "staff/car/reservation/list/",
         car_staff_reservation_list_view,
         name="staff-car-reservation-list-template"
+    ),
+    path(
+        "owner/car/reservation/list/",
+        car_owner_reservation_list_view,
+        name="owner-car-reservation-list-template"
+    ),
+    path(
+        "buyer/car/reservation/list/",
+        car_buyer_reservation_list_view,
+        name="buyer-car-reservation-list-template"
     ),
 ]

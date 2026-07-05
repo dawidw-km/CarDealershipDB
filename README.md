@@ -89,7 +89,9 @@ After logging in, users are redirected to their profile page (`/customer/profile
 | `/customer/car/register/`       | Register a new car                                      |
 | `/me/cars/update/<id>/`         | Update a car listing                                    |
 | `/customer/car/reservation/<id>/` | Reserve a car (via button on `/public/cars/`)         |
-| `/customer/sale/register/<id>/` | Purchase a car (template UI)                            | 
+| `/buyer/car/reservation/list/`  | Cars you have reserved                                  |
+| `/owner/car/reservation/list/`  | Your cars that someone has reserved                     |
+| `/customer/sale/register/<id>/` | Purchase a car (template UI)                            |
 | `/buyer/sales/`                 | Sales where you are the buyer                           |
 | `/owner/sales/`                 | Sales where you are the seller                          |
 | `/user/change-password/`        | Change password                                         |

@@ -43,4 +43,8 @@
     </tbody>
 </table>
 
-<a href="{% url 'employee-profile' %}">Back to Employee Profile</a>
+{% if request.user.employee_profile %}
+    <a href="{% url 'employee-profile' %}">Back to Employee Profile</a>
+{% else %}
+    <a href="{% url 'customer-profile' %}">Back to Customer Profile</a>
+{% endif %}
